@@ -51,6 +51,7 @@ pub struct Context {
     pub in_iteration: bool,
 }
 
+#[derive(Default)]
 pub struct Params {
     pub has_in: bool,
     pub has_await: bool,
@@ -877,7 +878,7 @@ where
                                 }));
                                 self.parse_for_classic_stmt(init)
                             }
-                            _ => return self.error_current(ErrorType::MissingInitializer), // TODO: check if row col is correct
+                            _ => self.error_current(ErrorType::MissingInitializer), // TODO: check if row col is correct
                         }
                     }
                 }
@@ -961,13 +962,11 @@ where
                                 }));
                                 self.parse_for_classic_stmt(init)
                             }
-                            _ => {
-                                return Err(Error {
-                                    line,
-                                    col,
-                                    errortype: ErrorType::MissingInitializer,
-                                })
-                            }
+                            _ => Err(Error {
+                                line,
+                                col,
+                                errortype: ErrorType::MissingInitializer,
+                            }),
                         }
                     }
                 }
@@ -1918,10 +1917,11 @@ where
                 this.consume(",", LexGoal::RegExp)?;
                 this.parse_assignment_expr()
             })?);
-            let mut assign_target_type = "invalid";
-            if expressions.len() == 1 {
-                assign_target_type = "simple";
-            }
+            let assign_target_type = if expressions.len() == 1 {
+                "simple"
+            } else {
+                "invalid"
+            };
             Ok(Node::SequenceExpression {
                 expressions,
                 assign_target_type,
@@ -2579,7 +2579,7 @@ where
     ) -> Result<Vec<FunctionParameter>> {
         log!("arguments_to_params");
         let mut params = vec![];
-        if arguments.len() == 0 {
+        if arguments.is_empty() {
             return Ok(params);
         }
         let last_idx = arguments.len() - 1;
@@ -2685,10 +2685,11 @@ where
                 }
             })?;
         self.consume(")", LexGoal::RegExp)?;
-        let mut assign_target_type = "invalid";
-        if expressions.len() == 1 {
-            assign_target_type = (&expressions[0]).assign_target_type();
-        }
+        let assign_target_type = if expressions.len() == 1 {
+            (&expressions[0]).assign_target_type()
+        } else {
+            "invalid"
+        };
         match (definitely_arrow, self.current.matches_punc("=>")) {
             (true, _) => self.seq_to_arrow(expressions),
             (false, true) => self.seq_to_arrow(expressions),
@@ -2737,7 +2738,7 @@ where
     pub fn seq_to_arrow_params(&mut self, seq: Vec<Node>) -> Result<Vec<FunctionParameter>> {
         log!("seq_to_arrow_params");
         let mut params = vec![];
-        if seq.len() == 0 {
+        if seq.is_empty() {
             return Ok(params);
         }
         let last_idx = seq.len() - 1;
@@ -3614,9 +3615,8 @@ where
                     },
                     &mut Self::parse_function_body,
                 )?);
-
-                let value = match r#async {
-                    true => Some(PropertyValue::AsyncFunctionExpression(
+                let value = if r#async {
+                    Some(PropertyValue::AsyncFunctionExpression(
                         AsyncFunctionExpression {
                             id: None,
                             params,
@@ -3625,15 +3625,16 @@ where
                             expression: false,
                             r#async,
                         },
-                    )),
-                    false => Some(PropertyValue::FunctionExpression(FunctionExpression {
+                    ))
+                } else {
+                    Some(PropertyValue::FunctionExpression(FunctionExpression {
                         id: None,
                         params,
                         body,
                         generator,
                         expression: false,
                         r#async,
-                    })),
+                    }))
                 };
                 Ok(ObjectExpressionProperty::Property {
                     key,

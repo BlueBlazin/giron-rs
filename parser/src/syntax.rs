@@ -7,7 +7,6 @@ pub trait Syntax {
     fn to_string(self) -> String;
     fn to_str(&self) -> &str;
     fn matches_str(&self, val: &str) -> bool;
-    fn matches_num(&self, val: f64) -> bool;
     fn matches_punc(&self, val: &str) -> bool;
     fn matches_null(&self) -> bool;
     fn is_assign_op(&self) -> bool;
@@ -49,13 +48,6 @@ impl Syntax for Token {
     fn matches_str(&self, val: &str) -> bool {
         match &self.value {
             Value::Str(s) if &s[..] == val => true,
-            _ => false,
-        }
-    }
-
-    fn matches_num(&self, val: f64) -> bool {
-        match self.value {
-            Value::Num(n) if n == val => true,
             _ => false,
         }
     }
