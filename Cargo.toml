@@ -1,0 +1,12 @@
+[workspace]
+
+members = [
+    "scanner",
+    "parser",
+    "estree",
+    "errors",
+    "tokenizer",
+    "token",
+    "codepoint",
+    "span",
+]
