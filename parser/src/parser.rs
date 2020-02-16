@@ -635,7 +635,6 @@ where
         match self.current.tokentype {
             TokenType::Punctuator if self.current.matches_punc(":") => match expr {
                 Node::Identifier { name, span, .. } => {
-                    self.advance(LexGoal::RegExp)?;
                     self.parse_labelled_stmt(Some(Identifier { name, span }))
                 }
                 _ => self.parse_expression_stmt(Box::from(expr)),
@@ -962,6 +961,12 @@ where
                 // for "(" [lookahead ≠ let] LeftHandSideExpression[?Yield, ?Await] "of"
                 //     AssignmentExpression[+In, ?Yield, ?Await] ")" Statement[?Yield, ?Await, ?Return]
                 self.start_span();
+                match self.current.tokentype {
+                    TokenType::Punctuator if self.current.matches_punc(";") => {
+                        return self.parse_for_classic_stmt(None)
+                    }
+                    _ => (),
+                }
                 let mut expr = self.with_in(false, &mut Self::parse_assignment_expr)?;
                 match self.current.tokentype {
                     TokenType::Keyword if self.current.matches_str("in") => {
@@ -3364,26 +3369,36 @@ where
                     }
                 }
                 TokenType::Identifier if this.current.matches_str("async") => {
-                    this.start_span();
-                    this.advance(LexGoal::RegExp)?;
-                    let span = this.end_span();
-                    if this.current.matches_punc("*") {
-                        this.advance(LexGoal::RegExp)?;
-                        generator = true;
-                    }
-                    if this.current.matches_punc("(") {
-                        return this.parse_method_definition(
-                            PropertyKey::Identifier(Identifier {
-                                name: String::from("async"),
-                                span,
-                            }),
-                            kind,
-                            r#async,
-                            generator,
-                            computed,
-                        );
-                    } else {
-                        r#async = true;
+                    this.scanner.save_state();
+                    let next_token = this.scanner.next(LexGoal::RegExp)?;
+                    match &next_token.tokentype {
+                        TokenType::Punctuator => {
+                            this.scanner.restore_state(next_token);
+                        }
+                        _ => {
+                            this.scanner.restore_state(next_token);
+                            this.start_span();
+                            this.advance(LexGoal::RegExp)?;
+                            let span = this.end_span();
+                            if this.current.matches_punc("*") {
+                                this.advance(LexGoal::RegExp)?;
+                                generator = true;
+                            }
+                            if this.current.matches_punc("(") {
+                                return this.parse_method_definition(
+                                    PropertyKey::Identifier(Identifier {
+                                        name: String::from("async"),
+                                        span,
+                                    }),
+                                    kind,
+                                    r#async,
+                                    generator,
+                                    computed,
+                                );
+                            } else {
+                                r#async = true;
+                            }
+                        }
                     }
                 }
                 TokenType::Punctuator if this.current.matches_punc("*") => {
