@@ -969,6 +969,7 @@ where
                 //     AssignmentExpression[+In, ?Yield, ?Await] ")" Statement[?Yield, ?Await, ?Return]
                 self.start_span();
                 let mut expr = self.with_in(false, &mut Self::parse_assignment_expr)?;
+                println!("\n\n\nHERE: {:?}\n\n\n", &self.current);
                 match self.current.tokentype {
                     TokenType::Keyword if self.current.matches_str("in") => {
                         self.end_span(); // not needed
@@ -2083,15 +2084,17 @@ where
         // ExponentiationExpression binop ExponentiationExpression
         self.start_span();
         let lhs = self.parse_exponentiation_expr()?;
-        self.precedence_climbing(lhs, 0)
+        self.precedence_climbing(lhs, 1)
     }
 
     fn precedence_climbing(&mut self, mut lhs: Node, prec: usize) -> Result<Node> {
-        while self.current.is_bin_op() && self.current.precedence() >= prec {
+        while self.current.is_bin_op() && self.current.precedence(self.params.has_in) >= prec {
             let op = self.advance(LexGoal::RegExp)?;
             let mut rhs = self.parse_exponentiation_expr()?;
-            while self.current.is_bin_op() && self.current.precedence() > op.precedence() {
-                rhs = self.precedence_climbing(rhs, self.current.precedence())?;
+            while self.current.is_bin_op()
+                && self.current.precedence(self.params.has_in) > op.precedence(self.params.has_in)
+            {
+                rhs = self.precedence_climbing(rhs, self.current.precedence(self.params.has_in))?;
             }
             lhs = Node::BinaryExpression {
                 operator: op.to_string(),

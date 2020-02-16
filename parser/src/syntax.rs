@@ -13,7 +13,7 @@ pub trait Syntax {
     fn is_bin_op(&self) -> bool;
     fn is_unary_op(&self) -> bool;
     fn is_update_op(&self) -> bool;
-    fn precedence(&self) -> usize;
+    fn precedence(&self, has_in: bool) -> usize;
     fn is_iteration_kw(&self) -> bool;
     fn is_hoistable_dclr_kw(&self) -> bool;
     fn is_lexical_dclr_kw(&self) -> bool;
@@ -163,32 +163,59 @@ impl Syntax for Token {
         }
     }
 
-    fn precedence(&self) -> usize {
-        match self.value {
-            Value::Punc(Punctuator::LogicalOr) => 1,
-            Value::Punc(Punctuator::LogicalAnd) => 2,
-            Value::Punc(Punctuator::BitOr) => 3,
-            Value::Punc(Punctuator::BitXor) => 4,
-            Value::Punc(Punctuator::BitAnd) => 5,
-            Value::Punc(Punctuator::Equal) => 6,
-            Value::Punc(Punctuator::NEqual) => 6,
-            Value::Punc(Punctuator::StrictEqual) => 6,
-            Value::Punc(Punctuator::StrictNEqual) => 6,
-            Value::Punc(Punctuator::LAngle) => 7,
-            Value::Punc(Punctuator::RAngle) => 7,
-            Value::Punc(Punctuator::LEqual) => 7,
-            Value::Punc(Punctuator::GEqual) => 7,
-            // Value::Punc(Punctuator::Instanceof) => 7,
-            Value::Punc(Punctuator::LShift) => 8,
-            Value::Punc(Punctuator::RShift) => 8,
-            Value::Punc(Punctuator::ZRShift) => 8,
-            Value::Punc(Punctuator::Plus) => 9,
-            Value::Punc(Punctuator::Minus) => 9,
-            Value::Punc(Punctuator::Star) => 10,
-            Value::Punc(Punctuator::Slash) => 10,
-            Value::Punc(Punctuator::Mod) => 11,
+    fn precedence(&self, has_in: bool) -> usize {
+        match self.tokentype {
+            TokenType::Punctuator if self.matches_punc("||") => 1,
+            TokenType::Punctuator if self.matches_punc("&&") => 2,
+            TokenType::Punctuator if self.matches_punc("|") => 3,
+            TokenType::Punctuator if self.matches_punc("^") => 4,
+            TokenType::Punctuator if self.matches_punc("&") => 5,
+            TokenType::Punctuator if self.matches_punc("==") => 6,
+            TokenType::Punctuator if self.matches_punc("!=") => 6,
+            TokenType::Punctuator if self.matches_punc("===") => 6,
+            TokenType::Punctuator if self.matches_punc("!==") => 6,
+            TokenType::Punctuator if self.matches_punc("<") => 7,
+            TokenType::Punctuator if self.matches_punc(">") => 7,
+            TokenType::Punctuator if self.matches_punc("<=") => 7,
+            TokenType::Punctuator if self.matches_punc(">=") => 7,
+            TokenType::Punctuator if self.matches_punc("<<") => 8,
+            TokenType::Punctuator if self.matches_punc(">>") => 8,
+            TokenType::Punctuator if self.matches_punc(">>>") => 8,
+            TokenType::Punctuator if self.matches_punc("+") => 9,
+            TokenType::Punctuator if self.matches_punc("-") => 9,
+            TokenType::Punctuator if self.matches_punc("*") => 10,
+            TokenType::Punctuator if self.matches_punc("/") => 10,
+            TokenType::Punctuator if self.matches_punc("%") => 11,
+            TokenType::Keyword if self.matches_str("instanceof") => 7,
+            TokenType::Keyword if (self.matches_str("in") && has_in) => 7,
             _ => 0,
         }
+
+        // match self.value {
+        //     Value::Punc(Punctuator::LogicalOr) => 1,
+        //     Value::Punc(Punctuator::LogicalAnd) => 2,
+        //     Value::Punc(Punctuator::BitOr) => 3,
+        //     Value::Punc(Punctuator::BitXor) => 4,
+        //     Value::Punc(Punctuator::BitAnd) => 5,
+        //     Value::Punc(Punctuator::Equal) => 6,
+        //     Value::Punc(Punctuator::NEqual) => 6,
+        //     Value::Punc(Punctuator::StrictEqual) => 6,
+        //     Value::Punc(Punctuator::StrictNEqual) => 6,
+        //     Value::Punc(Punctuator::LAngle) => 7,
+        //     Value::Punc(Punctuator::RAngle) => 7,
+        //     Value::Punc(Punctuator::LEqual) => 7,
+        //     Value::Punc(Punctuator::GEqual) => 7,
+        //     // Value::Punc(Punctuator::Instanceof) => 7,
+        //     Value::Punc(Punctuator::LShift) => 8,
+        //     Value::Punc(Punctuator::RShift) => 8,
+        //     Value::Punc(Punctuator::ZRShift) => 8,
+        //     Value::Punc(Punctuator::Plus) => 9,
+        //     Value::Punc(Punctuator::Minus) => 9,
+        //     Value::Punc(Punctuator::Star) => 10,
+        //     Value::Punc(Punctuator::Slash) => 10,
+        //     Value::Punc(Punctuator::Mod) => 11,
+        //     _ => 0,
+        // }
     }
 
     fn is_iteration_kw(&self) -> bool {
