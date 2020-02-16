@@ -20,6 +20,8 @@ fn test_snippet() {
 
 #[test]
 fn test_all_snippets() {
+    // test on js code snippets from 30-seconds-of-code
+    // https://github.com/30-seconds/30-seconds-of-code
     glob("tests/snippets/*.txt").unwrap().for_each(|entry| {
         if let Ok(path) = entry {
             let source = fs::read_to_string(path.clone()).unwrap();

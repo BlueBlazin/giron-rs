@@ -3321,40 +3321,60 @@ where
 
             match this.current.tokentype {
                 TokenType::Identifier if this.current.matches_str("get") => {
-                    this.start_span();
-                    this.advance(LexGoal::RegExp)?;
-                    let span = this.end_span();
-                    if this.current.matches_punc("(") {
-                        return this.parse_method_definition(
-                            PropertyKey::Identifier(Identifier {
-                                name: String::from("get"),
-                                span,
-                            }),
-                            kind,
-                            r#async,
-                            generator,
-                            computed,
-                        );
+                    this.scanner.save_state();
+                    let next_token = this.scanner.next(LexGoal::RegExp)?;
+                    match &next_token.tokentype {
+                        TokenType::Punctuator => {
+                            this.scanner.restore_state(next_token);
+                        }
+                        _ => {
+                            this.scanner.restore_state(next_token);
+                            this.start_span();
+                            this.advance(LexGoal::RegExp)?;
+                            let span = this.end_span();
+                            if this.current.matches_punc("(") {
+                                return this.parse_method_definition(
+                                    PropertyKey::Identifier(Identifier {
+                                        name: String::from("get"),
+                                        span,
+                                    }),
+                                    kind,
+                                    r#async,
+                                    generator,
+                                    computed,
+                                );
+                            }
+                            kind = "get";
+                        }
                     }
-                    kind = "get";
                 }
                 TokenType::Identifier if this.current.matches_str("set") => {
-                    this.start_span();
-                    this.advance(LexGoal::RegExp)?;
-                    let span = this.end_span();
-                    if this.current.matches_punc("(") {
-                        return this.parse_method_definition(
-                            PropertyKey::Identifier(Identifier {
-                                name: String::from("set"),
-                                span,
-                            }),
-                            kind,
-                            r#async,
-                            generator,
-                            computed,
-                        );
+                    this.scanner.save_state();
+                    let next_token = this.scanner.next(LexGoal::RegExp)?;
+                    match &next_token.tokentype {
+                        TokenType::Punctuator => {
+                            this.scanner.restore_state(next_token);
+                        }
+                        _ => {
+                            this.scanner.restore_state(next_token);
+                            this.start_span();
+                            this.advance(LexGoal::RegExp)?;
+                            let span = this.end_span();
+                            if this.current.matches_punc("(") {
+                                return this.parse_method_definition(
+                                    PropertyKey::Identifier(Identifier {
+                                        name: String::from("set"),
+                                        span,
+                                    }),
+                                    kind,
+                                    r#async,
+                                    generator,
+                                    computed,
+                                );
+                            }
+                            kind = "set";
+                        }
                     }
-                    kind = "set";
                 }
                 TokenType::Identifier if this.current.matches_str("async") => {
                     this.start_span();
