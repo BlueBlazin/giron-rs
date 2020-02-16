@@ -574,6 +574,34 @@ where
         if let Some('*') = self.peek() {
             return self.error(ErrorType::InvalidOrUnexpectedToken);
         }
+        let mut value = String::from("");
+        loop {
+            match self.peek() {
+                Some('\\') => {
+                    value.push(self.consume().ok_or(Error {
+                        line: self.line,
+                        col: self.line_start,
+                        errortype: ErrorType::UnexpectedEOS,
+                    })?);
+                    value.push(self.consume().ok_or(Error {
+                        line: self.line,
+                        col: self.line_start,
+                        errortype: ErrorType::UnexpectedEOS,
+                    })?);
+                }
+                Some(cp) if cp == '/' => break,
+                Some(_) => {
+                    let res = self.consume().ok_or(Error {
+                        line: self.line,
+                        col: self.line_start,
+                        errortype: ErrorType::UnexpectedEOS,
+                    })?;
+                    value.push(res);
+                }
+                None => break,
+            }
+        }
+
         let value = self.scan_until_with(|cp| cp == '/', &mut |this| {
             this.consume().ok_or(Error {
                 line: this.line,

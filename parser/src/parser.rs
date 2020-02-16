@@ -34,6 +34,7 @@ pub struct Context {
     pub strict: bool,
     pub in_function: bool,
     pub in_iteration: bool,
+    pub in_switch: bool,
 }
 
 #[derive(Default)]
@@ -85,6 +86,7 @@ where
                 strict: false,
                 in_function: false,
                 in_iteration: false,
+                in_switch: false,
             },
             params: Params::new(),
             has_line_terminator: false,
@@ -1161,6 +1163,8 @@ where
         // },
         self.start_span();
         self.consume_kw("switch", LexGoal::RegExp)?;
+        let prev_in_switch = self.ctx.in_switch;
+        self.ctx.in_switch = true;
         self.consume("(", LexGoal::RegExp)?;
         let discriminant = Box::from(self.with_in(true, &mut Self::parse_expression)?);
         self.consume(")", LexGoal::RegExp)?;
@@ -1192,6 +1196,7 @@ where
             }
         }
         self.consume("}", LexGoal::RegExp)?;
+        self.ctx.in_switch = prev_in_switch;
         Ok(Node::SwitchStatement {
             discriminant,
             cases,
@@ -1252,7 +1257,9 @@ where
             _ => None,
         };
         match &label {
-            None if !self.ctx.in_iteration => return self.error_current(ErrorType::IllegalBreak),
+            None if (!self.ctx.in_iteration && !self.ctx.in_switch) => {
+                return self.error_current(ErrorType::IllegalBreak)
+            }
             _ => (),
         }
         self.consume_semicolon(LexGoal::RegExp)?;

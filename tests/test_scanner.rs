@@ -1,4 +1,3 @@
-use glob::glob;
 use scanner::scanner::{LexGoal, Scanner};
 use std::fs;
 use token::token::TokenType;
