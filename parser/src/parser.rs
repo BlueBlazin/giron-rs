@@ -969,7 +969,6 @@ where
                 //     AssignmentExpression[+In, ?Yield, ?Await] ")" Statement[?Yield, ?Await, ?Return]
                 self.start_span();
                 let mut expr = self.with_in(false, &mut Self::parse_assignment_expr)?;
-                println!("\n\n\nHERE: {:?}\n\n\n", &self.current);
                 match self.current.tokentype {
                     TokenType::Keyword if self.current.matches_str("in") => {
                         self.end_span(); // not needed
