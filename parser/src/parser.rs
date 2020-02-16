@@ -1,9 +1,3 @@
-// use crate::parser::errors::{Error, ErrorType};
-// use crate::parser::estree::*;
-// use crate::parser::scanner::{LexGoal, Scanner, Token, TokenType, Value};
-// use crate::parser::span::{Marker, Span};
-// use crate::parser::syntax::Syntax;
-
 use crate::syntax::Syntax;
 use errors::errors::{Error, ErrorType};
 use errors::result::Result;
@@ -18,7 +12,7 @@ use token::value::Value;
 //   Dev stuff, Remove Me
 // **************************************************************
 
-const DEBUG: bool = true;
+const DEBUG: bool = false;
 
 macro_rules! log {
     ( $name:expr ) => {{
@@ -34,15 +28,6 @@ pub enum ValueOrExpr {
     Value(Value),
     Expr(Node),
 }
-
-// impl ValueOrExpr {
-//     pub fn string(&self) -> Result<String> {
-//         match self {
-//             ValueOrExpr::Value(Value::Str(s)) => Ok(s.clone()),
-//             _ => Err(Error::UnexpectedToken),
-//         }
-//     }
-// }
 
 pub struct Context {
     pub assign_target_type: &'static str,
@@ -587,7 +572,7 @@ where
             TokenType::Keyword if self.current.matches_str("class") => {
                 self.with_default(false, &mut Self::parse_class_dclr)
             }
-            TokenType::Keyword if self.current.is_lexical_dclr_kw() => {
+            TokenType::Identifier | TokenType::Keyword if self.current.is_lexical_dclr_kw() => {
                 self.with_in(true, &mut Self::parse_lexical_dclr)
             }
             // ExpressionStatement | LabelledStatement
@@ -758,6 +743,7 @@ where
         let consequent = Box::from(self.parse_statement()?);
         let alternate = match self.current.tokentype {
             TokenType::Keyword if self.current.matches_str("else") => {
+                self.advance(LexGoal::RegExp)?;
                 Some(Box::from(self.parse_statement()?))
             }
             _ => None,
@@ -937,7 +923,7 @@ where
                         // TODO: end span
                         self.parse_for_in_stmt(Box::from(id.to_node()?))
                     }
-                    TokenType::Keyword if self.current.matches_str("of") => {
+                    TokenType::Identifier if self.current.matches_str("of") => {
                         // LetOrConst Binding "of" ...
                         // TODO: end span
                         self.parse_for_of_stmt(Box::from(id.to_node()?))
@@ -1094,7 +1080,7 @@ where
         //     right: Box<Node>, // Expression
         //     body: Box<Node>,  // Statement
         // },
-        self.consume_kw("of", LexGoal::RegExp)?;
+        self.consume_id("of", LexGoal::RegExp)?;
         let right = Box::from(self.with_in(true, &mut Self::parse_assignment_expr)?);
         self.consume(")", LexGoal::RegExp)?;
         let prev_in_iteration = self.ctx.in_iteration;
@@ -2156,7 +2142,7 @@ where
         //     ! UnaryExpression[?Yield, ?Await]
         //     [+Await] AwaitExpression[?Yield]  TODO
         match self.current.tokentype {
-            TokenType::Punctuator if self.current.is_unary_op() => {
+            TokenType::Punctuator | TokenType::Keyword if self.current.is_unary_op() => {
                 self.start_span();
                 Ok(Node::UnaryExpression {
                     operator: self.advance(LexGoal::RegExp)?.to_string(),
@@ -2230,7 +2216,7 @@ where
         //     (CoverCallExpressionAndAsyncArrowHead | "super" Arguments)
         //         (Arguments | "[" Expression[+In] "]" | "." IdentifierName | TemplateLiteral[+Tagged])*
         self.start_span();
-        let mut callee = match self.current.tokentype {
+        let callee = match self.current.tokentype {
             TokenType::Keyword if self.current.matches_str("super") => {
                 let object = self.parse_super()?;
                 match self.current.tokentype {
@@ -2253,6 +2239,10 @@ where
             }
             _ => self.parse_member_expr(),
         }?;
+        self.parse_call_expr_tail(callee)
+    }
+
+    pub fn parse_call_expr_tail(&mut self, mut callee: Node) -> Result<Node> {
         loop {
             match self.current.tokentype {
                 TokenType::Punctuator if self.current.matches_punc("(") => {
@@ -2446,12 +2436,13 @@ where
                     }
                     _ => vec![],
                 };
-                Ok(Node::NewExpression {
+                let callee = Node::NewExpression {
                     callee,
                     arguments,
                     assign_target_type: "invalid",
                     span: self.end_span(),
-                })
+                };
+                self.parse_call_expr_tail(callee)
             }
         }
     }
@@ -2503,6 +2494,7 @@ where
             TokenType::Keyword if self.current.matches_str("class") => self.parse_class_expr(),
             TokenType::Keyword if self.current.matches_str("this") => {
                 self.start_span();
+                self.advance(LexGoal::Div)?;
                 Ok(Node::ThisExpression {
                     assign_target_type: "invalid",
                     span: self.end_span(),
@@ -2632,10 +2624,14 @@ where
                 this.start_span();
                 this.advance(LexGoal::RegExp)?;
                 let argument = this.with_in(true, &mut Self::parse_assignment_expr)?;
-                Ok(ArgumentListElement::SpreadElement(SpreadElement {
+                let res = ArgumentListElement::SpreadElement(SpreadElement {
                     argument,
                     span: this.end_span(),
-                }))
+                });
+                if !this.current.matches_punc(")") {
+                    this.consume(",", LexGoal::RegExp)?;
+                }
+                Ok(res)
             }
             _ => {
                 let expr = this.with_in(true, &mut Self::parse_assignment_expr)?;
@@ -2684,7 +2680,7 @@ where
                     Ok(expr)
                 }
             })?;
-        self.consume(")", LexGoal::RegExp)?;
+        self.consume(")", LexGoal::Div)?;
         let assign_target_type = if expressions.len() == 1 {
             (&expressions[0]).assign_target_type()
         } else {
@@ -2836,7 +2832,7 @@ where
                     _ => this.unexpected_current(),
                 }?;
                 let span = this.end_span();
-                match this.current.tokentype {
+                let property = match this.current.tokentype {
                     TokenType::Punctuator if this.current.matches_punc("=") => {
                         this.advance(LexGoal::RegExp)?;
                         let name = match &value {
@@ -2920,7 +2916,11 @@ where
                             shorthand: true,
                         })
                     }
+                }?;
+                if !this.current.matches_punc("}") {
+                    this.consume(",", LexGoal::RegExp)?;
                 }
+                Ok(property)
             }
         })?;
         self.consume("}", LexGoal::RegExp)?;
@@ -3304,10 +3304,14 @@ where
             if this.current.matches_punc("...") {
                 this.advance(LexGoal::RegExp)?;
                 let argument = this.with_in(true, &mut Self::parse_assignment_expr)?;
-                return Ok(ObjectExpressionProperty::SpreadElement {
+                let res = ObjectExpressionProperty::SpreadElement {
                     argument,
                     span: this.end_span(),
-                });
+                };
+                if !this.current.matches_punc("}") {
+                    this.consume(",", LexGoal::RegExp)?;
+                }
+                return Ok(res);
             }
 
             let mut computed = false;
@@ -3862,25 +3866,6 @@ where
     //      Utility
     // *******************************************************************
 
-    // fn parse_node_while_punc<F>(
-    //     &mut self,
-    //     punc: &str,
-    //     mut lhs: Node,
-    //     parse_fn: &mut F,
-    // ) -> Result<Node>
-    // where
-    //     F: FnMut(&mut Self, Node) -> Result<Node>,
-    // {
-    //     loop {
-    //         match self.current.tokentype {
-    //             TokenType::Punctuator if self.current.matches_punc(punc) => {
-    //                 lhs = parse_fn(self, lhs)?;
-    //             }
-    //             _ => return Ok(lhs),
-    //         }
-    //     }
-    // }
-
     fn parse_while_punc<F, T>(&mut self, punc: &str, parse_fn: &mut F) -> Result<Vec<T>>
     where
         F: FnMut(&mut Self) -> Result<T>,
@@ -4060,13 +4045,6 @@ where
     fn restore_params(&mut self) {
         self.params = self.params_stack.pop().unwrap();
     }
-
-    // fn push_marker(&mut self) {
-    //     self.marker_stack.push(Marker {
-    //         line: self.current.line_num,
-    //         col: self.current.line_start,
-    //     });
-    // }
 
     fn start_span(&mut self) {
         self.marker_stack.push(Marker {

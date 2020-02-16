@@ -1,0 +1,2 @@
+
+const minDate = dates => new Date(Math.min(...dates));

@@ -1260,7 +1260,7 @@ impl Node {
 
     fn array_to_pattern(elements: Vec<Option<ArrayExpressionElement>>, span: Span) -> Result<Node> {
         let mut pat_elems = vec![];
-        let last_idx = elements.len();
+        let last_idx = elements.len() - 1;
         for (i, element) in elements.into_iter().enumerate() {
             match element {
                 Some(ArrayExpressionElement::Expression(expr)) => {

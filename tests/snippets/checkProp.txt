@@ -1,0 +1,2 @@
+
+const checkProp = (predicate, prop) => obj => !!predicate(obj[prop]);

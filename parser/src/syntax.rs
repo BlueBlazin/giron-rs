@@ -86,31 +86,57 @@ impl Syntax for Token {
     }
 
     fn is_bin_op(&self) -> bool {
-        match self.value {
-            Value::Punc(Punctuator::LAngle)
-            | Value::Punc(Punctuator::RAngle)
-            | Value::Punc(Punctuator::LEqual)
-            | Value::Punc(Punctuator::GEqual)
-            | Value::Punc(Punctuator::Equal)
-            | Value::Punc(Punctuator::NEqual)
-            | Value::Punc(Punctuator::StrictEqual)
-            | Value::Punc(Punctuator::StrictNEqual)
-            | Value::Punc(Punctuator::Plus)
-            | Value::Punc(Punctuator::Minus)
-            | Value::Punc(Punctuator::Star)
-            | Value::Punc(Punctuator::Slash)
-            | Value::Punc(Punctuator::Mod)
-            | Value::Punc(Punctuator::LShift)
-            | Value::Punc(Punctuator::RShift)
-            | Value::Punc(Punctuator::ZRShift)
-            | Value::Punc(Punctuator::BitAnd)
-            | Value::Punc(Punctuator::BitOr)
-            | Value::Punc(Punctuator::BitXor)
-            | Value::Punc(Punctuator::LogicalAnd)
-            // | Value::Punc(Punctuator::Instanceof)
-            | Value::Punc(Punctuator::LogicalOr) => true,
+        match self.tokentype {
+            TokenType::Punctuator if self.matches_punc("<") => true,
+            TokenType::Punctuator if self.matches_punc(">") => true,
+            TokenType::Punctuator if self.matches_punc("<=") => true,
+            TokenType::Punctuator if self.matches_punc(">=") => true,
+            TokenType::Punctuator if self.matches_punc("==") => true,
+            TokenType::Punctuator if self.matches_punc("!=") => true,
+            TokenType::Punctuator if self.matches_punc("===") => true,
+            TokenType::Punctuator if self.matches_punc("!==") => true,
+            TokenType::Punctuator if self.matches_punc("+") => true,
+            TokenType::Punctuator if self.matches_punc("-") => true,
+            TokenType::Punctuator if self.matches_punc("*") => true,
+            TokenType::Punctuator if self.matches_punc("/") => true,
+            TokenType::Punctuator if self.matches_punc("%") => true,
+            TokenType::Punctuator if self.matches_punc("<<") => true,
+            TokenType::Punctuator if self.matches_punc(">>") => true,
+            TokenType::Punctuator if self.matches_punc(">>>") => true,
+            TokenType::Punctuator if self.matches_punc("&") => true,
+            TokenType::Punctuator if self.matches_punc("|") => true,
+            TokenType::Punctuator if self.matches_punc("^") => true,
+            TokenType::Punctuator if self.matches_punc("&&") => true,
+            TokenType::Punctuator if self.matches_punc("||") => true,
+            TokenType::Keyword if self.matches_str("in") => true,
+            TokenType::Keyword if self.matches_str("instanceof") => true,
             _ => false,
         }
+        // match self.value {
+        //     Value::Punc(Punctuator::LAngle)
+        //     | Value::Punc(Punctuator::RAngle)
+        //     | Value::Punc(Punctuator::LEqual)
+        //     | Value::Punc(Punctuator::GEqual)
+        //     | Value::Punc(Punctuator::Equal)
+        //     | Value::Punc(Punctuator::NEqual)
+        //     | Value::Punc(Punctuator::StrictEqual)
+        //     | Value::Punc(Punctuator::StrictNEqual)
+        //     | Value::Punc(Punctuator::Plus)
+        //     | Value::Punc(Punctuator::Minus)
+        //     | Value::Punc(Punctuator::Star)
+        //     | Value::Punc(Punctuator::Slash)
+        //     | Value::Punc(Punctuator::Mod)
+        //     | Value::Punc(Punctuator::LShift)
+        //     | Value::Punc(Punctuator::RShift)
+        //     | Value::Punc(Punctuator::ZRShift)
+        //     | Value::Punc(Punctuator::BitAnd)
+        //     | Value::Punc(Punctuator::BitOr)
+        //     | Value::Punc(Punctuator::BitXor)
+        //     | Value::Punc(Punctuator::LogicalAnd)
+        //     | Value::Punc(Punctuator::LogicalOr) => true,
+        //     // | Value::Punc(Punctuator::Instanceof)
+        //     _ => false,
+        // }
     }
 
     fn is_unary_op(&self) -> bool {

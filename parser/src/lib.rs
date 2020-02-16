@@ -78,8 +78,8 @@ mod tests {
     }
 
     #[test]
-    fn sandbox() {
-        let mut parser = parser::Parser::new("async.foo.bar(5 + 3, ...baz);".chars());
+    fn test_sandbox() {
+        let mut parser = parser::Parser::new("var { u, v } = w;".chars());
         // let ast = parser.parse_module().unwrap();
         // let serialized = serde_json::to_string_pretty(&ast).unwrap();
         match parser.parse_module() {

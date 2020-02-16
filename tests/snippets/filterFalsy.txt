@@ -1,0 +1,2 @@
+
+const filterFalsy = arr => arr.filter(Boolean);

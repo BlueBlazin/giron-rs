@@ -1,0 +1,4 @@
+
+const isWeekday = (t = new Date()) => {
+  return t.getDay() % 6 !== 0;
+};

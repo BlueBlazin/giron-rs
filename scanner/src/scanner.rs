@@ -1,8 +1,3 @@
-// use crate::parser::codepoint::CodePoint;
-// use crate::parser::errors::{Error, ErrorType};
-// use crate::parser::punctuators::Punctuator;
-// use crate::parser::reader::Reader;
-
 use crate::reader::Reader;
 use codepoint::codepoint::CodePoint;
 use errors::errors::{Error, ErrorType};
@@ -761,7 +756,7 @@ where
             (Some('-'), Some(cp)) => match cp {
                 '=' => self.punc2("-="),
                 '-' => self.punc2("--"),
-                _ => self.punc2("-"),
+                _ => self.punc1("-"),
             },
             (Some('&'), Some(cp)) => match cp {
                 '=' => self.punc2("&="),
