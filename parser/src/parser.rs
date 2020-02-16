@@ -29,22 +29,22 @@ pub enum ValueOrExpr {
     Expr(Node),
 }
 
-pub struct Context {
-    pub assign_target_type: &'static str,
-    pub strict: bool,
-    pub in_function: bool,
-    pub in_iteration: bool,
-    pub in_switch: bool,
+struct Context {
+    strict: bool,
+    in_function: bool,
+    in_iteration: bool,
+    in_switch: bool,
 }
 
+#[allow(dead_code)]
 #[derive(Default)]
-pub struct Params {
-    pub has_in: bool,
-    pub has_await: bool,
-    pub has_yield: bool,
-    pub has_tagged: bool,
-    pub has_return: bool,
-    pub has_default: bool,
+struct Params {
+    has_in: bool,
+    has_await: bool,
+    has_yield: bool,
+    has_tagged: bool,
+    has_return: bool,
+    has_default: bool,
 }
 
 impl Params {
@@ -61,12 +61,11 @@ impl Params {
 }
 
 pub struct Parser<I> {
-    pub scanner: Scanner<I>,
-    pub ctx: Context,
-    pub params: Params,
-    pub has_line_terminator: bool,
-    pub current: Token,
-    pub lookahead: Option<Token>,
+    scanner: Scanner<I>,
+    has_line_terminator: bool,
+    current: Token,
+    ctx: Context,
+    params: Params,
     params_stack: Vec<Params>,
     marker_stack: Vec<Marker>,
 }
@@ -82,7 +81,6 @@ where
         Parser {
             scanner,
             ctx: Context {
-                assign_target_type: "invalid",
                 strict: false,
                 in_function: false,
                 in_iteration: false,
@@ -91,7 +89,6 @@ where
             params: Params::new(),
             has_line_terminator: false,
             current,
-            lookahead: None,
             params_stack: vec![],
             marker_stack: vec![],
         }
@@ -101,6 +98,7 @@ where
     //      Scripts & Modules
     // *******************************************************************
 
+    /// Parse source as an ECMAScript script.
     pub fn parse_script(&mut self) -> Result<Node> {
         log!("parse_script");
         self.start_span();
@@ -113,6 +111,7 @@ where
         })
     }
 
+    /// /// Parse source as an ECMAScript module.
     pub fn parse_module(&mut self) -> Result<Node> {
         log!("parse_module");
         self.start_span();
@@ -159,7 +158,7 @@ where
         }
     }
 
-    pub fn parse_module_item(&mut self) -> Result<Node> {
+    fn parse_module_item(&mut self) -> Result<Node> {
         log!("parse_module_item");
         // ModuleItem:
         //     ImportDeclaration
@@ -180,7 +179,7 @@ where
         }
     }
 
-    pub fn parse_import_dclr(&mut self) -> Result<Node> {
+    fn parse_import_dclr(&mut self) -> Result<Node> {
         log!("parse_import_dclr");
         self.start_span();
         self.consume_kw("import", LexGoal::RegExp)?;
@@ -312,7 +311,7 @@ where
         })
     }
 
-    pub fn parse_module_specifier(&mut self) -> Result<Literal> {
+    fn parse_module_specifier(&mut self) -> Result<Literal> {
         match self.current.tokentype {
             TokenType::StringLiteral => {
                 self.start_span();
@@ -328,7 +327,7 @@ where
         }
     }
 
-    pub fn parse_export_dclr(&mut self) -> Result<Node> {
+    fn parse_export_dclr(&mut self) -> Result<Node> {
         log!("parse_export_dclr");
         self.start_span();
         self.consume_kw("export", LexGoal::RegExp)?;
@@ -498,7 +497,7 @@ where
     //      Statements & Declarations
     // *******************************************************************
 
-    pub fn parse_declaration(&mut self) -> Result<Node> {
+    fn parse_declaration(&mut self) -> Result<Node> {
         log!("parse_declaration");
         match self.current.tokentype {
             TokenType::Keyword if self.current.is_hoistable_dclr_kw() => {
@@ -514,12 +513,12 @@ where
         }
     }
 
-    pub fn parse_statement_list(&mut self) -> Result<Vec<Node>> {
+    fn parse_statement_list(&mut self) -> Result<Vec<Node>> {
         log!("parse_statement_list");
         self.parse_until_punc("}", &mut Self::parse_stmt_list_item)
     }
 
-    pub fn parse_stmt_list_item(&mut self) -> Result<Node> {
+    fn parse_stmt_list_item(&mut self) -> Result<Node> {
         log!("parse_stmt_list_item");
         match self.current.tokentype {
             // statements
@@ -582,7 +581,7 @@ where
         }
     }
 
-    pub fn parse_statement(&mut self) -> Result<Node> {
+    fn parse_statement(&mut self) -> Result<Node> {
         log!("parse_statement");
         // Statement[Yield, Await, Return]:
         //     BlockStatement[?Yield, ?Await, ?Return]
@@ -629,7 +628,7 @@ where
         }
     }
 
-    pub fn parse_expression_or_labelled_stmt(&mut self) -> Result<Node> {
+    fn parse_expression_or_labelled_stmt(&mut self) -> Result<Node> {
         log!("parse_expression_or_labelled_stmt");
         self.start_span();
         let expr = self.with_in(true, &mut Self::parse_expression)?;
@@ -645,7 +644,7 @@ where
         }
     }
 
-    pub fn parse_block_stmt(&mut self) -> Result<Node> {
+    fn parse_block_stmt(&mut self) -> Result<Node> {
         log!("parse_block_stmt");
         // BlockStatement[Yield, Await, Return]:
         //     Block[?Yield, ?Await, ?Return]
@@ -661,7 +660,7 @@ where
         })
     }
 
-    pub fn parse_variable_stmt(&mut self, consume_var: bool) -> Result<Node> {
+    fn parse_variable_stmt(&mut self, consume_var: bool) -> Result<Node> {
         log!("parse_variable_stmt");
         // VariableStatement[Yield, Await]:
         //     "var" VariableDeclarationList[+In, ?Yield, ?Await] ";"
@@ -710,7 +709,7 @@ where
         Ok(VariableDeclarator { id, init })
     }
 
-    pub fn parse_empty_stmt(&mut self) -> Result<Node> {
+    fn parse_empty_stmt(&mut self) -> Result<Node> {
         log!("parse_empty_stmt");
         self.start_span();
         self.consume(";", LexGoal::RegExp)?;
@@ -719,14 +718,14 @@ where
         })
     }
 
-    pub fn parse_expression_stmt(&mut self, expression: Box<Node>) -> Result<Node> {
+    fn parse_expression_stmt(&mut self, expression: Box<Node>) -> Result<Node> {
         log!("parse_expression_stmt");
         let span = self.end_span();
         self.consume_semicolon(LexGoal::RegExp)?;
         Ok(Node::ExpressionStatement { expression, span })
     }
 
-    pub fn parse_if_stmt(&mut self) -> Result<Node> {
+    fn parse_if_stmt(&mut self) -> Result<Node> {
         log!("parse_if_stmt");
         // IfStatement[Yield, Await, Return]:
         //     "if" "(" Expression[+In, ?Yield, ?Await] ")"
@@ -758,7 +757,7 @@ where
         })
     }
 
-    pub fn parse_iteration_stmt(&mut self) -> Result<Node> {
+    fn parse_iteration_stmt(&mut self) -> Result<Node> {
         log!("parse_iteration_stmt");
         match self.current.tokentype {
             TokenType::Keyword if self.current.matches_str("for") => self.parse_for_stmt(),
@@ -768,7 +767,7 @@ where
         }
     }
 
-    pub fn parse_for_stmt(&mut self) -> Result<Node> {
+    fn parse_for_stmt(&mut self) -> Result<Node> {
         log!("parse_for_stmt");
         // IterationStatement[Yield, Await, Return]:
         //     "for" "(" "var" VariableDeclarationList[~In, ?Yield, ?Await]
@@ -813,11 +812,6 @@ where
                 let id = self.parse_binding_id_or_pat()?;
                 match self.current.tokentype {
                     TokenType::Punctuator if self.current.matches_punc("=") => {
-                        // "var" (BindingIdentifier | BindingPattern) "=" Initializer
-                        // pub struct VariableDeclarator {
-                        //     pub id: Binding,
-                        //     pub init: Option<Node>, // Expression | null
-                        // }
                         self.advance(LexGoal::RegExp)?;
                         let init = Some(self.with_in(false, &mut Self::parse_assignment_expr)?);
                         let mut declarations = vec![VariableDeclarator { id, init }];
@@ -1097,7 +1091,7 @@ where
         })
     }
 
-    pub fn parse_while_stmt(&mut self) -> Result<Node> {
+    fn parse_while_stmt(&mut self) -> Result<Node> {
         log!("parse_while_stmt");
         // IterationStatement[Yield, Await, Return]:
         //     "while" "(" Expression[+In, ?Yield, ?Await] ")" Statement[?Yield, ?Await, ?Return]
@@ -1117,7 +1111,7 @@ where
         })
     }
 
-    pub fn parse_do_while_stmt(&mut self) -> Result<Node> {
+    fn parse_do_while_stmt(&mut self) -> Result<Node> {
         log!("parse_do_while_stmt");
         // IterationStatement[Yield, Await, Return]:
         //     "do" Statement[?Yield, ?Await, ?Return] "while" "(" Expression[+In, ?Yield, ?Await] ")" ";"
@@ -1143,7 +1137,7 @@ where
         })
     }
 
-    pub fn parse_switch_stmt(&mut self) -> Result<Node> {
+    fn parse_switch_stmt(&mut self) -> Result<Node> {
         log!("parse_switch_stmt");
         // SwitchStatement[Yield, Await, Return]:
         //     "switch" "(" Expression[+In, ?Yield, ?Await] ")" CaseBlock[?Yield, ?Await, ?Return]
@@ -1217,7 +1211,7 @@ where
         Ok(consequent)
     }
 
-    pub fn parse_continue_stmt(&mut self) -> Result<Node> {
+    fn parse_continue_stmt(&mut self) -> Result<Node> {
         log!("parse_continue_stmt");
         // ContinueStatement[Yield, Await]:
         //     "continue" ";"
@@ -1243,7 +1237,7 @@ where
         })
     }
 
-    pub fn parse_break_stmt(&mut self) -> Result<Node> {
+    fn parse_break_stmt(&mut self) -> Result<Node> {
         log!("parse_break_stmt");
         // BreakStatement[Yield, Await]:
         //     "break" ";"
@@ -1269,7 +1263,7 @@ where
         })
     }
 
-    pub fn parse_return_stmt(&mut self) -> Result<Node> {
+    fn parse_return_stmt(&mut self) -> Result<Node> {
         log!("parse_return_stmt");
         // ReturnStatement[Yield, Await]:
         //     "return" ";"
@@ -1290,7 +1284,7 @@ where
         })
     }
 
-    pub fn parse_with_stmt(&mut self) -> Result<Node> {
+    fn parse_with_stmt(&mut self) -> Result<Node> {
         log!("parse_with_stmt");
         // WithStatement[Yield, Await, Return]:
         //     "with" "(" Expression[+In, ?Yield, ?Await] ")" Statement[?Yield, ?Await, ?Return]
@@ -1310,7 +1304,7 @@ where
         })
     }
 
-    pub fn parse_labelled_stmt(&mut self, label: Option<Identifier>) -> Result<Node> {
+    fn parse_labelled_stmt(&mut self, label: Option<Identifier>) -> Result<Node> {
         log!("parse_labelled_stmt");
         // LabelledStatement[Yield, Await, Return]:
         //     LabelIdentifier[?Yield, ?Await] ":" LabelledItem[?Yield, ?Await, ?Return]
@@ -1348,7 +1342,7 @@ where
         })
     }
 
-    pub fn parse_throw_stmt(&mut self) -> Result<Node> {
+    fn parse_throw_stmt(&mut self) -> Result<Node> {
         log!("parse_throw_stmt");
         // ThrowStatement[Yield, Await]:
         //     "throw" [no LineTerminator here] Expression[+In, ?Yield, ?Await] ";"
@@ -1366,7 +1360,7 @@ where
         }
     }
 
-    pub fn parse_try_stmt(&mut self) -> Result<Node> {
+    fn parse_try_stmt(&mut self) -> Result<Node> {
         log!("parse_try_stmt");
         // TryStatement[Yield, Await, Return]:
         //     "try" Block[?Yield, ?Await, ?Return] Catch[?Yield, ?Await, ?Return]
@@ -1428,7 +1422,7 @@ where
         }
     }
 
-    pub fn parse_debugger_stmt(&mut self) -> Result<Node> {
+    fn parse_debugger_stmt(&mut self) -> Result<Node> {
         log!("parse_debugger_stmt");
         self.start_span();
         self.consume_kw("debugger", LexGoal::RegExp)?;
@@ -1438,7 +1432,7 @@ where
         })
     }
 
-    pub fn parse_hoistable_dclr(&mut self) -> Result<Node> {
+    fn parse_hoistable_dclr(&mut self) -> Result<Node> {
         log!("parse_hoistable_dclr");
         // HoistableDeclaration[Yield, Await, Default]:
         //     FunctionDeclaration[?Yield, ?Await, ?Default]
@@ -1458,7 +1452,7 @@ where
         }
     }
 
-    pub fn parse_function_dclr(&mut self, r#async: bool, allow_generator: bool) -> Result<Node> {
+    fn parse_function_dclr(&mut self, r#async: bool, allow_generator: bool) -> Result<Node> {
         log!("parse_function_dclr");
         // FunctionDeclaration[Yield, Await, Default]:
         //     "function" BindingIdentifier[?Yield, ?Await] "(" FormalParameters[~Yield, ~Await] ")" "{" FunctionBody[~Yield, ~Await] "}"
@@ -1550,7 +1544,7 @@ where
         })
     }
 
-    pub fn parse_function_body(&mut self) -> Result<Node> {
+    fn parse_function_body(&mut self) -> Result<Node> {
         let prev_in_function = self.ctx.in_function;
         self.ctx.in_function = true;
         let res = self.with_return(true, &mut Self::parse_function_body_block);
@@ -1576,7 +1570,7 @@ where
         })
     }
 
-    pub fn parse_class_dclr(&mut self) -> Result<Node> {
+    fn parse_class_dclr(&mut self) -> Result<Node> {
         log!("parse_class_dclr");
         // ClassDeclaration[Yield, Await, Default]:
         //     "class" BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
@@ -1862,7 +1856,7 @@ where
         Ok(ClassBody { body })
     }
 
-    pub fn parse_lexical_dclr(&mut self) -> Result<Node> {
+    fn parse_lexical_dclr(&mut self) -> Result<Node> {
         log!("parse_lexical_dclr");
         // VariableDeclaration {
         //     declarations: Vec<VariableDeclarator>,
@@ -1897,6 +1891,7 @@ where
     //      Expressions
     // *******************************************************************
 
+    /// Parse am ECMAScript expression.
     pub fn parse_expression(&mut self) -> Result<Node> {
         log!("parse_expression");
         // Expression[In, Yield, Await]:
@@ -1925,7 +1920,7 @@ where
         }
     }
 
-    pub fn parse_assignment_expr(&mut self) -> Result<Node> {
+    fn parse_assignment_expr(&mut self) -> Result<Node> {
         log!("parse_assignment_expr");
         // AssignmentExpression[In, Yield, Await]:
         //     [+Yield] YieldExpression[?In, ?Await]
@@ -1990,7 +1985,7 @@ where
         }
     }
 
-    pub fn parse_yield_expr(&mut self) -> Result<Node> {
+    fn parse_yield_expr(&mut self) -> Result<Node> {
         // YieldExpression[In, Await]:
         //     "yield"
         //     "yield" `no LineTerminator here` AssignmentExpression[+Yield]
@@ -2053,7 +2048,7 @@ where
         })
     }
 
-    pub fn parse_conditional_expr(&mut self) -> Result<Node> {
+    fn parse_conditional_expr(&mut self) -> Result<Node> {
         log!("parse_conditional_expr");
         // ConditionalExpression[In, Yield, Await]:
         //     LogicalORExpression[?In, ?Yield, ?Await]
@@ -2078,7 +2073,7 @@ where
         }
     }
 
-    pub fn parse_binary_expr(&mut self) -> Result<Node> {
+    fn parse_binary_expr(&mut self) -> Result<Node> {
         log!("parse_binary_expr");
         // ExponentiationExpression binop ExponentiationExpression
         self.start_span();
@@ -2108,7 +2103,7 @@ where
         Ok(lhs)
     }
 
-    pub fn parse_exponentiation_expr(&mut self) -> Result<Node> {
+    fn parse_exponentiation_expr(&mut self) -> Result<Node> {
         // ExponentiationExpression[Yield, Await]:
         //     UnaryExpression[?Yield, ?Await]
         //     UpdateExpression[?Yield, ?Await] ** ExponentiationExpression[?Yield, ?Await]
@@ -2138,7 +2133,7 @@ where
         }
     }
 
-    pub fn parse_unary_expr(&mut self) -> Result<Node> {
+    fn parse_unary_expr(&mut self) -> Result<Node> {
         log!("parse_unary_expr");
         // UnaryExpression[Yield, Await]:
         //     UpdateExpression[?Yield, ?Await]
@@ -2165,7 +2160,7 @@ where
         }
     }
 
-    pub fn parse_update_expr(&mut self) -> Result<Node> {
+    fn parse_update_expr(&mut self) -> Result<Node> {
         log!("parse_update_expr");
         if self.current.is_update_op() {
             self.start_span();
@@ -2211,7 +2206,7 @@ where
         }
     }
 
-    pub fn parse_left_hand_side_expr(&mut self) -> Result<Node> {
+    fn parse_left_hand_side_expr(&mut self) -> Result<Node> {
         log!("parse_left_hand_side_expr");
         match self.current.tokentype {
             TokenType::Keyword if self.current.matches_str("new") => self.parse_new_expr(),
@@ -2219,7 +2214,7 @@ where
         }
     }
 
-    pub fn parse_call_expr(&mut self) -> Result<Node> {
+    fn parse_call_expr(&mut self) -> Result<Node> {
         log!("parse_call_expr");
         // CallExpression:
         //     (CoverCallExpressionAndAsyncArrowHead | "super" Arguments)
@@ -2251,7 +2246,7 @@ where
         self.parse_call_expr_tail(callee)
     }
 
-    pub fn parse_call_expr_tail(&mut self, mut callee: Node) -> Result<Node> {
+    fn parse_call_expr_tail(&mut self, mut callee: Node) -> Result<Node> {
         loop {
             match self.current.tokentype {
                 TokenType::Punctuator if self.current.matches_punc("(") => {
@@ -2295,7 +2290,7 @@ where
         Ok(callee)
     }
 
-    pub fn parse_member_expr(&mut self) -> Result<Node> {
+    fn parse_member_expr(&mut self) -> Result<Node> {
         log!("parse_member_expr");
         // MemberExpression:
         //     (PrimaryExpression | SuperProperty)
@@ -2388,7 +2383,7 @@ where
         })
     }
 
-    pub fn parse_new_expr(&mut self) -> Result<Node> {
+    fn parse_new_expr(&mut self) -> Result<Node> {
         log!("parse_new_expr");
         // LeftHandSideExpression:
         //     ("new")* MemberExpression
@@ -2456,7 +2451,7 @@ where
         }
     }
 
-    pub fn parse_super(&mut self) -> Result<Node> {
+    fn parse_super(&mut self) -> Result<Node> {
         log!("parse_super");
         self.start_span();
         self.consume_kw("super", LexGoal::RegExp)?;
@@ -2477,7 +2472,7 @@ where
         }
     }
 
-    pub fn parse_primary_expr(&mut self) -> Result<Node> {
+    fn parse_primary_expr(&mut self) -> Result<Node> {
         log!("parse_primary_expr");
         // PrimaryExpression[Yield, Await]:
         //     FunctionExpression
@@ -2546,7 +2541,7 @@ where
         }
     }
 
-    pub fn parse_async_call_or_arrow(&mut self, callee: Box<Node>) -> Result<Node> {
+    fn parse_async_call_or_arrow(&mut self, callee: Box<Node>) -> Result<Node> {
         log!("parse_async_call_or_arrow");
         let arguments = self.parse_arguments()?;
         match self.current.tokentype {
@@ -2574,7 +2569,7 @@ where
         }
     }
 
-    pub fn arguments_to_params(
+    fn arguments_to_params(
         &mut self,
         arguments: Vec<ArgumentListElement>,
     ) -> Result<Vec<FunctionParameter>> {
@@ -2616,7 +2611,7 @@ where
         Ok(params)
     }
 
-    pub fn parse_arguments(&mut self) -> Result<Vec<ArgumentListElement>> {
+    fn parse_arguments(&mut self) -> Result<Vec<ArgumentListElement>> {
         log!("parse_arguments");
         // Arguments[Yield, Await]:
         //     "(" ")"
@@ -2654,7 +2649,7 @@ where
         Ok(arguments)
     }
 
-    pub fn parse_seq_or_arrow(&mut self) -> Result<Node> {
+    fn parse_seq_or_arrow(&mut self) -> Result<Node> {
         log!("parse_seq_or_arrow");
         // CoverParenthesizedExpressionAndArrowParameterList[Yield, Await]:
         //     "(" Expression[+In, ?Yield, ?Await] ")"
@@ -2706,25 +2701,8 @@ where
         }
     }
 
-    pub fn seq_to_arrow(&mut self, seq: Vec<Node>) -> Result<Node> {
+    fn seq_to_arrow(&mut self, seq: Vec<Node>) -> Result<Node> {
         log!("seq_to_arrow");
-        // ArrowParameterPlaceHolder {
-        //     params: Vec<FunctionParameter>,
-        //     r#async: bool,
-        // }
-        // pub enum FunctionParameter {
-        //     AssignmentPattern { left: Binding, right: Node },
-        //     BindingIdentifier { name: String },
-        //     BindingPattern(BindingPattern),
-        // }
-        // pub enum BindingPattern {
-        //     ArrayPattern {
-        //         elements: Vec<Option<ArrayPatternElement>>,
-        //     },
-        //     ObjectPattern {
-        //         properties: Vec<Option<ObjectPatternProperty>>,
-        //     },
-        // }
         let params = self.seq_to_arrow_params(seq)?;
         self.consume("=>", LexGoal::RegExp)?;
         let (body, expression) = self.parse_arrow_body()?;
@@ -2740,7 +2718,7 @@ where
         })
     }
 
-    pub fn seq_to_arrow_params(&mut self, seq: Vec<Node>) -> Result<Vec<FunctionParameter>> {
+    fn seq_to_arrow_params(&mut self, seq: Vec<Node>) -> Result<Vec<FunctionParameter>> {
         log!("seq_to_arrow_params");
         let mut params = vec![];
         if seq.is_empty() {
@@ -2779,7 +2757,7 @@ where
         Ok(params)
     }
 
-    pub fn parse_binding_id_or_pat(&mut self) -> Result<Binding> {
+    fn parse_binding_id_or_pat(&mut self) -> Result<Binding> {
         log!("parse_binding_id_or_pat");
         match self.current.tokentype {
             TokenType::Identifier | TokenType::Keyword => self.parse_binding_id(),
@@ -2789,7 +2767,7 @@ where
         }
     }
 
-    pub fn parse_obj_binding_pat(&mut self) -> Result<Binding> {
+    fn parse_obj_binding_pat(&mut self) -> Result<Binding> {
         log!("parse_obj_binding_pat");
         // ObjectBindingPattern[Yield, Await]:
         //     "{" "}"
@@ -2939,7 +2917,7 @@ where
         }))
     }
 
-    pub fn value_to_key(
+    fn value_to_key(
         &mut self,
         value: ValueOrExpr,
         literal: bool,
@@ -2976,7 +2954,7 @@ where
         }
     }
 
-    pub fn parse_arr_binding_pat(&mut self) -> Result<Binding> {
+    fn parse_arr_binding_pat(&mut self) -> Result<Binding> {
         log!("parse_arr_binding_pat");
         // ArrayBindingPattern[Yield, Await]:
         //     "[" Elision(opt) BindingRestElement(opt) "]"
@@ -3062,7 +3040,7 @@ where
         }))
     }
 
-    pub fn parse_template_literal(&mut self) -> Result<Node> {
+    fn parse_template_literal(&mut self) -> Result<Node> {
         log!("parse_template_literal");
         let mut expressions = vec![];
         let mut quasis = vec![];
@@ -3121,7 +3099,7 @@ where
         }
     }
 
-    pub fn parse_class_expr(&mut self) -> Result<Node> {
+    fn parse_class_expr(&mut self) -> Result<Node> {
         // ClassExpression[Yield, Await]:
         //     "class" BindingIdentifier[?Yield, ?Await](opt) ClassTail[?Yield, ?Await]
         // ClassTail[Yield, Await]:
@@ -3152,7 +3130,7 @@ where
         self.parse_class_tail(id)
     }
 
-    pub fn parse_function_expr(&mut self, r#async: bool) -> Result<Node> {
+    fn parse_function_expr(&mut self, r#async: bool) -> Result<Node> {
         log!("parse_function_expr");
         // FunctionExpression:
         //     "function" BindingIdentifier(opt)
@@ -3196,7 +3174,7 @@ where
         })
     }
 
-    pub fn parse_formal_params(&mut self) -> Result<Vec<FunctionParameter>> {
+    fn parse_formal_params(&mut self) -> Result<Vec<FunctionParameter>> {
         log!("parse_formal_params");
         // FormalParameters[Yield, Await]:
         //     [empty]
@@ -3271,7 +3249,7 @@ where
         Ok(parameters)
     }
 
-    pub fn parse_object_lit_expr(&mut self) -> Result<Node> {
+    fn parse_object_lit_expr(&mut self) -> Result<Node> {
         log!("parse_object_lit_expr");
         // ObjectLiteral[Yield, Await]:
         //     "{" "}"
@@ -3500,7 +3478,7 @@ where
         })
     }
 
-    pub fn parse_property_name(&mut self) -> Result<(PropertyKey, bool)> {
+    fn parse_property_name(&mut self) -> Result<(PropertyKey, bool)> {
         log!("parse_property_name");
         match self.current.tokentype {
             TokenType::Identifier | TokenType::Keyword => {
@@ -3531,7 +3509,7 @@ where
         }
     }
 
-    pub fn parse_computed_property_name(&mut self) -> Result<PropertyKey> {
+    fn parse_computed_property_name(&mut self) -> Result<PropertyKey> {
         log!("parse_computed_property_name");
         self.consume("[", LexGoal::RegExp)?;
         let name = PropertyKey::Expression(self.with_in(true, &mut Self::parse_assignment_expr)?);
@@ -3539,7 +3517,7 @@ where
         Ok(name)
     }
 
-    pub fn parse_method_definition(
+    fn parse_method_definition(
         &mut self,
         key: PropertyKey,
         kind: &'static str,
@@ -3548,27 +3526,6 @@ where
         computed: bool,
     ) -> Result<ObjectExpressionProperty> {
         log!("parse_method_definition");
-        // pub enum ObjectExpressionProperty {
-        //     Property {
-        //         key: PropertyKey,
-        //         computed: bool,
-        //         value: Option<PropertyValue>,
-        //         kind: &'static str,
-        //         method: bool,
-        //         shorthand: bool,
-        //     },
-        //     SpreadElement {
-        //         argument: Node,
-        //     },
-        // }
-        // FunctionExpression {
-        //     id: Option<Box<Node>>, // Identifier | null
-        //     params: Vec<FunctionParameter>,
-        //     body: Box<Node>, // BlockStatement
-        //     generator: bool,
-        //     expression: bool,
-        //     r#async: bool,
-        // },
         match kind {
             "get" => {
                 self.consume("(", LexGoal::RegExp)?;
@@ -3683,7 +3640,7 @@ where
         }
     }
 
-    pub fn parse_array_lit_expr(&mut self) -> Result<Node> {
+    fn parse_array_lit_expr(&mut self) -> Result<Node> {
         log!("parse_array_lit_expr");
         // ArrayLiteral[Yield, Await]:
         //     "[" Elision(opt) "]"
@@ -3734,7 +3691,7 @@ where
         })
     }
 
-    pub fn parse_async_primary_expr(&mut self) -> Result<Node> {
+    fn parse_async_primary_expr(&mut self) -> Result<Node> {
         log!("parse_async_primary_expr");
         self.start_span();
         let id = self.parse_id_reference()?;
@@ -3781,7 +3738,7 @@ where
         }
     }
 
-    pub fn parse_arrow_body(&mut self) -> Result<(Box<Node>, bool)> {
+    fn parse_arrow_body(&mut self) -> Result<(Box<Node>, bool)> {
         log!("parse_arrow_body");
         let body;
         let mut expression = false;
@@ -3811,7 +3768,7 @@ where
         Ok((body, expression))
     }
 
-    pub fn parse_id_reference(&mut self) -> Result<Node> {
+    fn parse_id_reference(&mut self) -> Result<Node> {
         log!("parse_id_reference");
         // IdentifierReference[Yield, Await]:
         //     Identifier
@@ -3857,7 +3814,7 @@ where
         }
     }
 
-    pub fn parse_binding_id(&mut self) -> Result<Binding> {
+    fn parse_binding_id(&mut self) -> Result<Binding> {
         log!("parse_binding_id");
         self.start_span();
         match self.current.tokentype {
