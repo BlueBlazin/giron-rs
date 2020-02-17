@@ -4,7 +4,7 @@ use token::token::TokenType;
 
 #[test]
 fn test_scanner() {
-    let mut scnr = Scanner::new("const x = this".chars());
+    let mut scnr = Scanner::new("+(a)".chars());
     loop {
         let token = scnr.next(LexGoal::RegExp).unwrap();
         match token.tokentype {

@@ -79,7 +79,7 @@ mod tests {
 
     #[test]
     fn test_sandbox() {
-        let mut parser = parser::Parser::new("mylabel: while (x < 5) x++".chars());
+        let mut parser = parser::Parser::new("(y&1) === 0;".chars());
         // let ast = parser.parse_module().unwrap();
         // let serialized = serde_json::to_string_pretty(&ast).unwrap();
         match parser.parse_module() {

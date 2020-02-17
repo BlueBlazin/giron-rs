@@ -569,7 +569,6 @@ where
     }
 
     fn scan_regexp_body(&mut self) -> Result<String> {
-        // TODO: Do a better scan and report early errors.
         self.expect('/')?;
         if let Some('*') = self.peek() {
             return self.error(ErrorType::InvalidOrUnexpectedToken);
@@ -577,6 +576,16 @@ where
         let mut value = String::from("");
         loop {
             match self.peek() {
+                Some('[') => {
+                    let group = self.scan_until_with(|cp| cp == ']', &mut |this| {
+                        this.consume().ok_or(Error {
+                            line: this.line,
+                            col: this.line_start,
+                            errortype: ErrorType::UnexpectedEOS,
+                        })
+                    })?;
+                    value.push_str(&group);
+                }
                 Some('\\') => {
                     value.push(self.consume().ok_or(Error {
                         line: self.line,
@@ -601,14 +610,6 @@ where
                 None => break,
             }
         }
-
-        let value = self.scan_until_with(|cp| cp == '/', &mut |this| {
-            this.consume().ok_or(Error {
-                line: this.line,
-                col: this.line_start,
-                errortype: ErrorType::UnexpectedEOS,
-            })
-        })?;
         self.expect('/')?;
         Ok(value)
     }
@@ -779,7 +780,7 @@ where
             (Some('+'), Some(cp)) => match cp {
                 '=' => self.punc2("+="),
                 '+' => self.punc2("++"),
-                _ => self.punc2("+"),
+                _ => self.punc1("+"),
             },
             (Some('-'), Some(cp)) => match cp {
                 '=' => self.punc2("-="),
@@ -789,20 +790,20 @@ where
             (Some('&'), Some(cp)) => match cp {
                 '=' => self.punc2("&="),
                 '&' => self.punc2("&&"),
-                _ => self.punc2("&"),
+                _ => self.punc1("&"),
             },
             (Some('|'), Some(cp)) => match cp {
                 '=' => self.punc2("|="),
                 '|' => self.punc2("||"),
-                _ => self.punc2("|"),
+                _ => self.punc1("|"),
             },
             (Some('%'), Some(cp)) => match cp {
                 '=' => self.punc2("%="),
-                _ => self.punc2("%"),
+                _ => self.punc1("%"),
             },
             (Some('^'), Some(cp)) => match cp {
                 '=' => self.punc2("^="),
-                _ => self.punc2("^"),
+                _ => self.punc1("^"),
             },
             (Some('.'), _) => {
                 self.consume();
