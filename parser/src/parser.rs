@@ -831,12 +831,10 @@ where
                     }
                     TokenType::Keyword if self.current.matches_str("of") => {
                         // "var" (BindingIdentifier | BindingPattern) "of"
-                        // TODO: end span
                         self.parse_for_of_stmt(Box::from(id.to_node()?))
                     }
                     TokenType::Keyword if self.current.matches_str("in") => {
                         // "var" (BindingIdentifier | BindingPattern) "in"
-                        // TODO: end span
                         self.parse_for_in_stmt(Box::from(id.to_node()?))
                     }
                     _ => {
@@ -859,7 +857,7 @@ where
                                 }));
                                 self.parse_for_classic_stmt(init)
                             }
-                            _ => self.error_current(ErrorType::MissingInitializer), // TODO: check if row col is correct
+                            _ => self.error_current(ErrorType::MissingInitializer),
                         }
                     }
                 }
@@ -915,12 +913,10 @@ where
                     }
                     TokenType::Keyword if self.current.matches_str("in") => {
                         // LetOrConst Binding "in" ...
-                        // TODO: end span
                         self.parse_for_in_stmt(Box::from(id.to_node()?))
                     }
                     TokenType::Identifier if self.current.matches_str("of") => {
                         // LetOrConst Binding "of" ...
-                        // TODO: end span
                         self.parse_for_of_stmt(Box::from(id.to_node()?))
                     }
                     _ => {
@@ -1580,7 +1576,8 @@ where
         // ClassDeclaration[Yield, Await, Default]:
         //     "class" BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
         //     [+Default] "class" ClassTail[?Yield, ?Await]
-        // TODO: strict mode
+        let prev_strict = self.ctx.strict;
+        self.ctx.strict = true;
         self.start_span();
         self.consume_kw("class", LexGoal::RegExp)?;
         let id = match self.parse_binding_id()? {
@@ -1589,7 +1586,9 @@ where
             }
             _ => unreachable!(),
         }?;
-        self.parse_class_tail(Some(Box::from(id)))
+        let res = self.parse_class_tail(Some(Box::from(id)))?;
+        self.ctx.strict = prev_strict;
+        Ok(res)
     }
 
     fn parse_class_tail(&mut self, id: Option<Box<Node>>) -> Result<Node> {
@@ -1939,7 +1938,6 @@ where
         }
         self.start_span();
         let mut lhs = self.parse_conditional_expr()?;
-        // TODO: store row and col
 
         if let Node::Identifier { name, .. } = &lhs {
             match self.current.tokentype {
@@ -1955,7 +1953,6 @@ where
                 let token = self.advance(LexGoal::RegExp)?;
                 lhs = lhs.to_assignment_pattern()?;
                 if lhs.assign_target_type() != "simple" {
-                    // TODO: use correct row and col
                     return self.error(token, ErrorType::InvalidLhsInAssignment);
                 }
                 let rhs = self.parse_assignment_expr()?;
@@ -1971,7 +1968,6 @@ where
                 let token = self.advance(LexGoal::RegExp)?;
                 let operator = token.value.clone().punc().unwrap().to_str();
                 if lhs.assign_target_type() != "simple" {
-                    // TODO: use correct row and col
                     return self.error(token, ErrorType::InvalidLhsInAssignment);
                 }
                 let rhs = self.parse_assignment_expr()?;
@@ -2113,7 +2109,7 @@ where
         //     UnaryExpression[?Yield, ?Await]
         //     UpdateExpression[?Yield, ?Await] ** ExponentiationExpression[?Yield, ?Await]
         log!("parse_exponentiation_expr");
-        if self.current.is_unary_op() {
+        if self.current.is_unary_op(self.params.has_await) {
             self.parse_unary_expr()
         } else {
             self.start_span();
@@ -2149,9 +2145,11 @@ where
         //     - UnaryExpression[?Yield, ?Await]
         //     ~ UnaryExpression[?Yield, ?Await]
         //     ! UnaryExpression[?Yield, ?Await]
-        //     [+Await] AwaitExpression[?Yield]  TODO
+        //     [+Await] AwaitExpression[?Yield]
         match self.current.tokentype {
-            TokenType::Punctuator | TokenType::Keyword if self.current.is_unary_op() => {
+            TokenType::Punctuator | TokenType::Keyword
+                if self.current.is_unary_op(self.params.has_await) =>
+            {
                 self.start_span();
                 Ok(Node::UnaryExpression {
                     operator: self.advance(LexGoal::RegExp)?.to_string(),
@@ -2605,11 +2603,10 @@ where
                     if i == last_idx {
                         Ok(FunctionParameter::RestElement { argument })
                     } else {
-                        // TODO: fix row and col
                         self.error_current(ErrorType::ParamAfterRest)
                     }
                 }
-                _ => self.error_current(ErrorType::InvalidDestructuringTarget), // TODO: fix row and col
+                _ => self.error_current(ErrorType::InvalidDestructuringTarget),
             }?;
             params.push(param);
         }
@@ -2751,11 +2748,10 @@ where
                     if i == last_idx {
                         Ok(FunctionParameter::RestElement { argument })
                     } else {
-                        // TODO: fix row and col
                         self.error_current(ErrorType::ParamAfterRest)
                     }
                 }
-                _ => self.error_current(ErrorType::InvalidDestructuringTarget), // TODO: fix row and col
+                _ => self.error_current(ErrorType::InvalidDestructuringTarget),
             }?;
             params.push(param);
         }
@@ -3121,6 +3117,8 @@ where
         //     "static" MethodDefinition[?Yield, ?Await]
         //     ";"
         log!("parse_class_expr");
+        let prev_strict = self.ctx.strict;
+        self.ctx.strict = true;
         self.start_span();
         self.consume_kw("class", LexGoal::RegExp)?;
         let id = match self.current.tokentype {
@@ -3130,9 +3128,12 @@ where
                 }
                 _ => unreachable!(),
             },
-            _ => None,
+            _ if self.params.has_default => None,
+            _ => return self.unexpected_current(),
         };
-        self.parse_class_tail(id)
+        let res = self.parse_class_tail(id)?;
+        self.ctx.strict = prev_strict;
+        Ok(res)
     }
 
     fn parse_function_expr(&mut self, r#async: bool) -> Result<Node> {
@@ -3651,7 +3652,7 @@ where
                     span: self.end_span(),
                 })
             }
-            _ => self.unexpected_current(), // TODO: fix row and col
+            _ => self.unexpected_current(),
         }
     }
 

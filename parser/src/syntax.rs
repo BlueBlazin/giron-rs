@@ -11,7 +11,7 @@ pub trait Syntax {
     fn matches_null(&self) -> bool;
     fn is_assign_op(&self) -> bool;
     fn is_bin_op(&self) -> bool;
-    fn is_unary_op(&self) -> bool;
+    fn is_unary_op(&self, has_await: bool) -> bool;
     fn is_update_op(&self) -> bool;
     fn precedence(&self, has_in: bool) -> usize;
     fn is_iteration_kw(&self) -> bool;
@@ -139,7 +139,7 @@ impl Syntax for Token {
         // }
     }
 
-    fn is_unary_op(&self) -> bool {
+    fn is_unary_op(&self, has_await: bool) -> bool {
         let unary_punc = match self.value {
             Value::Punc(Punctuator::Plus)
             | Value::Punc(Punctuator::Minus)
@@ -150,6 +150,7 @@ impl Syntax for Token {
         let unary_keyword = match self.tokentype {
             TokenType::Keyword => match self.to_str() {
                 "delete" | "void" | "typeof" => true,
+                "await" if has_await => true,
                 _ => false,
             },
             _ => false,
