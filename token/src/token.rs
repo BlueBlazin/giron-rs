@@ -26,7 +26,7 @@ pub struct Token {
     pub head: Option<bool>,
     pub tail: Option<bool>,
     pub line_num: usize,
-    pub line_start: usize,
+    pub col: usize,
     pub start: usize,
     pub end: usize,
 }

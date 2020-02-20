@@ -277,7 +277,7 @@ where
                         let token = this.advance(LexGoal::RegExp)?;
                         return Err(Error {
                             line: token.line_num,
-                            col: token.line_start,
+                            col: token.col,
                             errortype: ErrorType::UnexpectedReserved,
                         });
                     }
@@ -888,7 +888,7 @@ where
                     _ => return self.unexpected_current(),
                 };
                 self.advance(LexGoal::RegExp)?;
-                let (line, col) = (self.current.line_num, self.current.line_start);
+                let (line, col) = (self.current.line_num, self.current.col);
                 let id = self.parse_binding_id_or_pat()?;
                 match self.current.tokentype {
                     TokenType::Punctuator if self.current.matches_punc("=") => {
@@ -2168,7 +2168,7 @@ where
         if self.current.is_update_op() {
             self.start_span();
             let operator = self.advance(LexGoal::RegExp)?.to_string();
-            let (line, col) = (self.current.line_num, self.current.line_start);
+            let (line, col) = (self.current.line_num, self.current.col);
             let expr = self.parse_unary_expr()?;
             if expr.assign_target_type() == "invalid" || expr.assign_target_type() == "strict" {
                 return Err(Error {
@@ -2186,7 +2186,7 @@ where
             })
         } else {
             self.start_span();
-            let (line, col) = (self.current.line_num, self.current.line_start);
+            let (line, col) = (self.current.line_num, self.current.col);
             let expr = self.parse_left_hand_side_expr()?;
             if !self.has_line_terminator && self.current.is_update_op() {
                 if expr.assign_target_type() == "invalid" || expr.assign_target_type() == "strict" {
@@ -2848,7 +2848,7 @@ where
                             PropertyKey::Expression(_) => true,
                             _ => false,
                         };
-                        let (line, col) = (this.current.line_num, this.current.line_start);
+                        let (line, col) = (this.current.line_num, this.current.col);
                         let pattern = this.parse_binding_id_or_pat()?;
                         let obj_value = match this.current.tokentype {
                             TokenType::Punctuator if this.current.matches_punc("=") => {
@@ -2999,7 +2999,7 @@ where
                     }))
                 }
                 _ => {
-                    let (line, col) = (this.current.line_num, this.current.line_start);
+                    let (line, col) = (this.current.line_num, this.current.col);
                     let pattern = this.parse_binding_id_or_pat()?;
                     let element = match this.current.tokentype {
                         TokenType::Punctuator if this.current.matches_punc("=") => {
@@ -3216,7 +3216,7 @@ where
                     })
                 }
                 _ => {
-                    let (line, col) = (this.current.line_num, this.current.line_start);
+                    let (line, col) = (this.current.line_num, this.current.col);
                     let left = this.parse_binding_id_or_pat()?;
                     let param = match this.current.tokentype {
                         TokenType::Punctuator if this.current.matches_punc("=") => {
@@ -4051,7 +4051,7 @@ where
     fn start_span(&mut self) {
         self.marker_stack.push(Marker {
             line: self.current.line_num,
-            col: self.current.line_start,
+            col: self.current.col,
             idx: self.current.start,
         });
     }
@@ -4065,7 +4065,7 @@ where
             start,
             end: Marker {
                 line: self.scanner.line,
-                col: self.scanner.line_start,
+                col: self.scanner.col,
                 idx: self.scanner.current,
             },
         }
@@ -4080,7 +4080,7 @@ where
             start,
             end: Marker {
                 line: self.scanner.line,
-                col: self.scanner.line_start,
+                col: self.scanner.col,
                 idx: self.scanner.current,
             },
         }
@@ -4093,7 +4093,7 @@ where
     fn error<T>(&mut self, token: Token, errortype: ErrorType) -> Result<T> {
         Err(Error {
             line: token.line_num,
-            col: token.line_start,
+            col: token.col,
             errortype,
         })
     }
@@ -4107,7 +4107,7 @@ where
         match &token.tokentype {
             _ => Err(Error {
                 line: token.line_num,
-                col: token.line_start,
+                col: token.col,
                 errortype: ErrorType::UnexpectedToken(String::from(&token.value)),
             }),
         }

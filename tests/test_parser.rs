@@ -4,7 +4,7 @@ use std::fs;
 
 #[test]
 fn test_parser() {
-    let mut parser = Parser::new("for (const [i, val] of x) x;".chars());
+    let mut parser = Parser::new("[1, 2, }, 4]".chars());
     parser.parse_script().unwrap();
 }
 

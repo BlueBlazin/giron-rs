@@ -24,7 +24,7 @@ struct ScannerState {
     start: usize,
     current: usize,
     line: usize,
-    line_start: usize,
+    col: usize,
     newline: bool,
     raw_string: String,
     curly_stack: Vec<Brace>,
@@ -34,7 +34,7 @@ pub struct Scanner<I> {
     pub start: usize,
     pub current: usize,
     pub line: usize,
-    pub line_start: usize,
+    pub col: usize,
     pub newline: bool,
     reader: Reader<I>,
     record_raw: bool,
@@ -52,8 +52,8 @@ where
         Scanner {
             start: 0,
             current: 0,
-            line: 0,
-            line_start: 0,
+            line: 1,
+            col: 1,
             newline: false,
             reader: Reader::new(source),
             record_raw: false,
@@ -204,7 +204,7 @@ where
                 .scan_until_with(|cp| !cp.is_hex_digit(), &mut |this| {
                     this.consume().ok_or(Error {
                         line: this.line,
-                        col: this.line_start,
+                        col: this.col,
                         errortype: ErrorType::UnexpectedEOS,
                     })
                 })?
@@ -214,7 +214,7 @@ where
             self.expect('}')?;
             char::from_u32(value).ok_or(Error {
                 line: self.line,
-                col: self.line_start,
+                col: self.col,
                 errortype: ErrorType::InvalidUnicodeEscapeSequence,
             })
         } else {
@@ -229,7 +229,7 @@ where
             }
             char::from_u32(value).ok_or(Error {
                 line: self.line,
-                col: self.line_start,
+                col: self.col,
                 errortype: ErrorType::InvalidOrUnexpectedToken,
             })
         }
@@ -287,7 +287,7 @@ where
                 let val = self.scan_until_with(|cp| !cp.is_decimal_digit(), &mut |this| {
                     this.consume().ok_or(Error {
                         line: this.line,
-                        col: this.line_start,
+                        col: this.col,
                         errortype: ErrorType::UnexpectedEOS,
                     })
                 })?;
@@ -300,7 +300,7 @@ where
                     .map(|i| i as f64)
                     .map_err(|_| Error {
                         line: self.line,
-                        col: self.line_start,
+                        col: self.col,
                         errortype: ErrorType::InvalidOrUnexpectedToken,
                     })
             }
@@ -309,7 +309,7 @@ where
                 let mut val = self.scan_until_with(|cp| !cp.is_decimal_digit(), &mut |this| {
                     this.consume().ok_or(Error {
                         line: this.line,
-                        col: this.line_start,
+                        col: this.col,
                         errortype: ErrorType::UnexpectedEOS,
                     })
                 })?;
@@ -320,7 +320,7 @@ where
                     val.push_str(&self.scan_exponent()?);
                     val.parse().map_err(|_| Error {
                         line: self.line,
-                        col: self.line_start,
+                        col: self.col,
                         errortype: ErrorType::InvalidOrUnexpectedToken,
                     })
                 }
@@ -343,7 +343,7 @@ where
         let fractional = self.scan_until_with(|cp| !cp.is_decimal_digit(), &mut |this| {
             this.consume().ok_or(Error {
                 line: this.line,
-                col: this.line_start,
+                col: this.col,
                 errortype: ErrorType::InvalidOrUnexpectedToken,
             })
         })?;
@@ -353,7 +353,7 @@ where
         // We use parse here instead of from_str_radix for convenience
         value.parse().map_err(|_| Error {
             line: self.line,
-            col: self.line_start,
+            col: self.col,
             errortype: ErrorType::InvalidOrUnexpectedToken,
         })
     }
@@ -371,7 +371,7 @@ where
                 let exponent = self.scan_until_with(|cp| !cp.is_decimal_digit(), &mut |this| {
                     this.consume().ok_or(Error {
                         line: this.line,
-                        col: this.line_start,
+                        col: this.col,
                         errortype: ErrorType::InvalidOrUnexpectedToken,
                     })
                 })?;
@@ -390,7 +390,7 @@ where
         let value = self.scan_until_with(|cp| !cp.is_hex_digit(), &mut |this| {
             this.consume().ok_or(Error {
                 line: this.line,
-                col: this.line_start,
+                col: this.col,
                 errortype: ErrorType::InvalidOrUnexpectedToken,
             })
         })?;
@@ -399,7 +399,7 @@ where
             .map(|i| i as f64)
             .map_err(|_| Error {
                 line: self.line,
-                col: self.line_start,
+                col: self.col,
                 errortype: ErrorType::InvalidOrUnexpectedToken,
             })
     }
@@ -442,7 +442,7 @@ where
                     self.consume();
                     let val = self.consume().map(|esc| esc.unescape()).ok_or(Error {
                         line: self.line,
-                        col: self.line_start,
+                        col: self.col,
                         errortype: ErrorType::UnexpectedEOS,
                     });
                     return (val, false);
@@ -463,7 +463,7 @@ where
                     return (
                         self.consume().ok_or(Error {
                             line: self.line,
-                            col: self.line_start,
+                            col: self.col,
                             errortype: ErrorType::UnexpectedEOS,
                         }),
                         false,
@@ -473,7 +473,7 @@ where
                     return (
                         Err(Error {
                             line: self.line,
-                            col: self.line_start,
+                            col: self.col,
                             errortype: ErrorType::InvalidOrUnexpectedToken,
                         }),
                         false,
@@ -483,7 +483,7 @@ where
                     return (
                         self.consume().ok_or(Error {
                             line: self.line,
-                            col: self.line_start,
+                            col: self.col,
                             errortype: ErrorType::UnexpectedEOS,
                         }),
                         false,
@@ -493,7 +493,7 @@ where
                     return (
                         Err(Error {
                             line: self.line,
-                            col: self.line_start,
+                            col: self.col,
                             errortype: ErrorType::InvalidOrUnexpectedToken,
                         }),
                         false,
@@ -509,7 +509,7 @@ where
         let value = self.scan_until_with(|cp| !cp.is_octal_digit(), &mut |this| {
             this.consume().ok_or(Error {
                 line: this.line,
-                col: this.line_start,
+                col: this.col,
                 errortype: ErrorType::UnexpectedEOS,
             })
         })?;
@@ -518,13 +518,13 @@ where
             .map(|i| i as u32)
             .map_err(|_| Error {
                 line: self.line,
-                col: self.line_start,
+                col: self.col,
                 errortype: ErrorType::InvalidOrUnexpectedToken,
             })?;
 
         char::from_u32(mv).ok_or(Error {
             line: self.line,
-            col: self.line_start,
+            col: self.col,
             errortype: ErrorType::InvalidOrUnexpectedToken,
         })
     }
@@ -543,7 +543,7 @@ where
         }
         char::from_u32(value).ok_or(Error {
             line: self.line,
-            col: self.line_start,
+            col: self.col,
             errortype: ErrorType::InvalidOrUnexpectedToken,
         })
     }
@@ -580,7 +580,7 @@ where
                     let group = self.scan_until_with(|cp| cp == ']', &mut |this| {
                         this.consume().ok_or(Error {
                             line: this.line,
-                            col: this.line_start,
+                            col: this.col,
                             errortype: ErrorType::UnexpectedEOS,
                         })
                     })?;
@@ -589,12 +589,12 @@ where
                 Some('\\') => {
                     value.push(self.consume().ok_or(Error {
                         line: self.line,
-                        col: self.line_start,
+                        col: self.col,
                         errortype: ErrorType::UnexpectedEOS,
                     })?);
                     value.push(self.consume().ok_or(Error {
                         line: self.line,
-                        col: self.line_start,
+                        col: self.col,
                         errortype: ErrorType::UnexpectedEOS,
                     })?);
                 }
@@ -602,7 +602,7 @@ where
                 Some(_) => {
                     let res = self.consume().ok_or(Error {
                         line: self.line,
-                        col: self.line_start,
+                        col: self.col,
                         errortype: ErrorType::UnexpectedEOS,
                     })?;
                     value.push(res);
@@ -728,7 +728,7 @@ where
                 self.consume();
                 self.consume().map(|cp| cp.unescape()).ok_or(Error {
                     line: self.line,
-                    col: self.line_start,
+                    col: self.col,
                     errortype: ErrorType::UnexpectedEOS,
                 })
             }
@@ -739,7 +739,7 @@ where
                 self.consume();
                 self.consume().ok_or(Error {
                     line: self.line,
-                    col: self.line_start,
+                    col: self.col,
                     errortype: ErrorType::UnexpectedEOS,
                 })
             }
@@ -749,7 +749,7 @@ where
             }
             (Some(_), _) => self.consume().ok_or(Error {
                 line: self.line,
-                col: self.line_start,
+                col: self.col,
                 errortype: ErrorType::UnexpectedEOS,
             }),
             (_, _) => self.error(ErrorType::InvalidOrUnexpectedToken),
@@ -940,10 +940,12 @@ where
             }
         }
         self.current += 1;
+        self.col += 1;
         match (cp, self.peek()) {
             (Some('\r'), Some('\n')) => (),
             (Some(cp), _) if cp.is_line_terminator() => {
                 self.line += 1;
+                self.col = 1;
                 self.newline = true;
             }
             (_, _) => (),
@@ -952,7 +954,7 @@ where
     }
 
     fn start_new_token(&mut self) {
-        self.line_start = self.line;
+        self.col = 1;
         self.start = self.current;
     }
 
@@ -986,7 +988,7 @@ where
             head,
             tail,
             line_num: self.line,
-            line_start: self.line_start,
+            col: self.col,
             start: self.start,
             end: self.current - 1,
         })
@@ -1015,7 +1017,7 @@ where
         //     start: usize,
         //     current: usize,
         //     line: usize,
-        //     line_start: usize,
+        //     col: usize,
         //     newline: bool,
         //     raw_string: String,
         //     curly_stack: Vec<Brace>,
@@ -1024,7 +1026,7 @@ where
             start: self.start,
             current: self.current,
             line: self.line,
-            line_start: self.line_start,
+            col: self.col,
             newline: self.newline,
             raw_string: self.raw_string.clone(),
             curly_stack: self.curly_stack.clone(),
@@ -1038,7 +1040,7 @@ where
                 self.start = state.start;
                 self.current = state.current;
                 self.line = state.line;
-                self.line_start = state.line_start;
+                self.col = state.col;
                 self.newline = state.newline;
                 self.raw_string = state.raw_string;
                 self.curly_stack = state.curly_stack;
@@ -1051,7 +1053,7 @@ where
     fn error<T>(&self, errortype: ErrorType) -> Result<T> {
         Err(Error {
             line: self.line,
-            col: self.line_start,
+            col: self.col,
             errortype,
         })
     }
