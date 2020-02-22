@@ -34,3 +34,24 @@ fn test_all_snippets() {
         }
     });
 }
+
+#[test]
+fn test_react() {
+    let source = fs::read_to_string("tests/source/react.js").unwrap();
+    let mut parser = Parser::new(source.chars());
+    parser.parse_module().unwrap();
+}
+
+#[test]
+fn test_react_dom() {
+    let source = fs::read_to_string("tests/source/react-dom.js").unwrap();
+    let mut parser = Parser::new(source.chars());
+    parser.parse_module().unwrap();
+}
+
+#[test]
+fn test_angular() {
+    let source = fs::read_to_string("tests/source/angular.js").unwrap();
+    let mut parser = Parser::new(source.chars());
+    parser.parse_module().unwrap();
+}
