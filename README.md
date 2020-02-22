@@ -6,6 +6,7 @@ v0.1.0
 
 - [Introduction](#introduction)
 - [Contribution](#contribution)
+- [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
 
@@ -27,6 +28,10 @@ This repository is looking for contributors. There's still a lot of work to be d
 4. Refactor the codebase to increase readability and add more documentation.
 5. Improve performance.
 6. Add JSX support.
+
+## Requirements
+
+TODO
 
 ## Installation
 
