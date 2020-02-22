@@ -4,7 +4,7 @@ use std::fs;
 
 #[test]
 fn test_parser() {
-    let mut parser = Parser::new("[1, 2, }, 4]".chars());
+    let mut parser = Parser::new("[1, 2, 4]".chars());
     parser.parse_script().unwrap();
 }
 
@@ -26,10 +26,11 @@ fn test_all_snippets() {
         if let Ok(path) = entry {
             let source = fs::read_to_string(path.clone()).unwrap();
             let mut parser = Parser::new(source.chars());
-            match parser.parse_module() {
-                Ok(_) => (),
-                Err(e) => println!("{}, {}\n{:?}", path.display(), &e, e),
-            }
+            // match parser.parse_module() {
+            //     Ok(_) => (),
+            //     Err(e) => println!("{}, {}\n{:?}", path.display(), &e, e),
+            // }
+            parser.parse_module().unwrap();
         }
     });
 }

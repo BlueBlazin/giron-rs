@@ -115,6 +115,7 @@ where
     pub fn parse_module(&mut self) -> Result<Node> {
         log!("parse_module");
         self.start_span();
+        self.ctx.strict = true;
         let mut body = self.with_params(
             Params {
                 has_yield: false,

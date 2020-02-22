@@ -15,6 +15,7 @@ members = [
     "token",
     "codepoint",
     "span",
+    "giron-wasm",
 ]
 
 [dependencies]
