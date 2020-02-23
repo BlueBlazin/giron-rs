@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/BlueBlazin/giron.svg?branch=master)](https://travis-ci.com/BlueBlazin/giron)
+
 # Giron
 
 v0.1.0
