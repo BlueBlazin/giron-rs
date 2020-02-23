@@ -31,14 +31,28 @@ This repository is looking for contributors. There's still a lot of work to be d
 
 ## Requirements
 
-TODO
+1. You need to have Rust and Cargo installed. https://www.rust-lang.org/
+2. For giron-wasm you need a browser capable of executing WebAssembly.
 
 ## Installation
 
-TODO
+1. Clone the repository.
+2. Build the binary using cargo build.
+
+```sh
+git clone https://github.com/BlueBlazin/giron.git
+cd giron
+cargo build
+```
 
 ## Usage
 
-TODO
+To parse a javascript file using the built binary, run giron using cargo with a single argument providing the path of the file.
+
+By default the result is output to stdout. To redirect it to a file:
+
+```sh
+cargo run myscript.js > myscript.json
+```
 
 Author: Sanjeet N. Dasharath

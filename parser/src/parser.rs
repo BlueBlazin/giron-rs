@@ -128,7 +128,7 @@ where
         body.extend(self.parse_until_eof(&mut Self::parse_module_item)?);
         Ok(Node::Program {
             body,
-            source_type: "script",
+            source_type: "module",
             span: self.end_span(),
         })
     }

@@ -235,6 +235,7 @@ pub struct AsyncFunctionExpression {
 
 #[derive(Serialize, Debug)]
 #[serde(tag = "type")]
+#[serde(rename = "Identifier")]
 pub struct BindingIdentifier {
     pub name: String,
     #[serde(skip)]
@@ -509,6 +510,7 @@ pub enum Node {
         #[serde(skip)]
         span: Span,
     },
+    #[serde(rename = "Identifier")]
     BindingIdentifier {
         name: String,
         #[serde(skip)]
