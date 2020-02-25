@@ -1,5 +1,5 @@
 [package]
-name = "giron-rs"
+name = "giron-cli"
 version = "0.1.0"
 authors = ["Sanjeet N. Dasharath <sanjeetdasharath@gmail.com>"]
 edition = "2018"
@@ -10,30 +10,9 @@ repository = "https://github.com/BlueBlazin/giron"
 keywords = ["javascript", "ecmascript", "parser", "tokenizer", "js", "es"]
 categories = ["parser-implementations"]
 
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[workspace]
-members = [
-    "scanner",
-    "parser",
-    "estree",
-    "errors",
-    "tokenizer",
-    "token",
-    "codepoint",
-    "span",
-    "giron-wasm",
-    "giron",
-    "giron-cli",
-]
-
-
-[dev-dependencies]
+[dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-glob = "0.3.0"
-parser = { path = "./parser" }
-token = { path = "./token" }
-scanner = { path = "./scanner" }
-estree = { path = "./estree" }
-errors = { path = "./errors" }
-span = { path = "./span" }
+parser = { path = "../parser" }
