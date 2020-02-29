@@ -1,5 +1,8 @@
 # giron-rs
 
+[![Build Status](https://travis-ci.com/BlueBlazin/giron.svg?branch=master)](https://travis-ci.com/BlueBlazin/giron)
+[![Active Development](https://img.shields.io/badge/Maintenance%20Level-Actively%20Developed-brightgreen.svg)](https://gist.github.com/cheerfulstoic/d107229326a01ff0f333a1d3476e068d)
+
 The goal of the giron-rs project is to provide ECMAScript parsing capabalities for Rust and WebAssembly programmers.
 The output is an Abstract Syntax Tree (AST) in JSON format using the ESTree specification. ESTree is the most popular output format of open source javascript parsers.
 
