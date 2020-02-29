@@ -7,7 +7,7 @@ license = "MIT OR Apache-2.0"
 homepage = "https://github.com/BlueBlazin/giron"
 description = "ECMAScript parser which outputs ESTree JSON."
 repository = "https://github.com/BlueBlazin/giron"
-keywords = ["javascript", "ecmascript", "parser", "tokenizer", "js", "es"]
+keywords = ["javascript", "ecmascript", "parser", "tokenizer", "js"]
 categories = ["parser-implementations"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
