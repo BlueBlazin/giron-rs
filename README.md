@@ -13,7 +13,7 @@ The giron rust crate is a library for parsing ECMAScript.
 
 ## giron-wasm
 
-An WebAssembly based package for parsing ECMAScript on the client side.
+A WebAssembly based package for parsing ECMAScript on the client side.
 
 ## giron-node
 
