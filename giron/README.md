@@ -8,7 +8,6 @@ v0.1.0
 
 - [Introduction](#introduction)
 - [Contribution](#contribution)
-- [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
 
@@ -31,28 +30,19 @@ This repository is looking for contributors. There's still a lot of work to be d
 5. Improve performance.
 6. Add JSX support.
 
-## Requirements
-
-1. You need to have Rust and Cargo installed. https://www.rust-lang.org/
-2. For giron-wasm you need a browser capable of executing WebAssembly.
-
 ## Installation
 
-1. Clone the repository.
-2. Build the binary using cargo build.
-
-```sh
-git clone https://github.com/BlueBlazin/giron.git
-cd giron
-cargo build
-```
+Get from crates.io: https://crates.io/crates/giron
 
 ## Usage
 
-To parse a javascript file using the built binary, run giron using cargo with a single argument providing the path of the file.
+Once you add `giron` to your Cargo.toml,
 
-By default the result is output to stdout. To redirect it to a file:
+```rs
+use giron::{parse_module, parse_script};
 
-```sh
-cargo run myscript.js > myscript.json
+fn main() {
+    let source = String::from("const PI = 3.14;");
+    parse_script(source).unwrap();
+}
 ```

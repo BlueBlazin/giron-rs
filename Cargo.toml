@@ -2,5 +2,4 @@
 members = [
     "giron-wasm",
     "giron",
-    "giron-cli",
 ]
