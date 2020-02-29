@@ -7,10 +7,6 @@ The output is an Abstract Syntax Tree (AST) in JSON format using the ESTree spec
 
 The giron rust crate is a library for parsing ECMAScript.
 
-## giron-cli
-
-A command line tool for parsing ECMAScript.
-
 ## giron-wasm
 
 An WebAssembly based package for parsing ECMAScript on the client side.
