@@ -4,12 +4,12 @@ version = "0.1.2"
 authors = ["Sanjeet N. Dasharath <sanjeetdasharath@gmail.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/BlueBlazin/giron"
+readme = "README.md"
 homepage = "https://github.com/BlueBlazin/giron"
 description = "ECMAScript parser which outputs ESTree JSON."
-repository = "https://github.com/BlueBlazin/giron"
 keywords = ["javascript", "ecmascript", "parser", "tokenizer", "js"]
 categories = ["parser-implementations"]
-readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

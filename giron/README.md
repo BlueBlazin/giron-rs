@@ -2,8 +2,6 @@
 
 # Giron
 
-v0.1.1
-
 ## Table of Contents
 
 - [Introduction](#introduction)
