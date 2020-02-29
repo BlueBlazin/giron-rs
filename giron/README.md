@@ -38,11 +38,36 @@ Get from crates.io: https://crates.io/crates/giron
 
 Once you add `giron` to your Cargo.toml,
 
+**Basic Usage:**
+
 ```rs
 use giron::{parse_module, parse_script};
 
 fn main() {
     let source = String::from("const PI = 3.14;");
+    parse_script(source).unwrap();
+}
+```
+
+**Giron Errors:**
+
+```rs
+use giron::{parse_module, parse_script, GironError, EstreeNode};
+
+fn analyze_ast() -> Result<EstreeNode, GironError> {
+    let source = String::from("const PI = 3.14;");
+    parse_script(source)
+}
+```
+
+**Parse contents of a javascript file:**
+
+```rs
+use giron::{parse_module, parse_script};
+use std::fs;
+
+fn main() {
+    let source = fs::read_to_string("example-file.js").unwrap();
     parse_script(source).unwrap();
 }
 ```

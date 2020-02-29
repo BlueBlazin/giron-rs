@@ -367,12 +367,12 @@ pub struct MethodDefinition {
     pub r#static: bool,
 }
 
-#[derive(Serialize, Debug)]
-#[serde(untagged)]
-pub enum MethodDefinitionValue {
-    AsyncFunctionExpression(AsyncFunctionExpression),
-    FunctionExpression(FunctionExpression),
-}
+// #[derive(Serialize, Debug)]
+// #[serde(untagged)]
+// pub enum MethodDefinitionValue {
+//     AsyncFunctionExpression(AsyncFunctionExpression),
+//     FunctionExpression(FunctionExpression),
+// }
 
 #[derive(Serialize, Debug)]
 #[serde(tag = "type")]
