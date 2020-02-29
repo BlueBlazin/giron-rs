@@ -56,5 +56,3 @@ By default the result is output to stdout. To redirect it to a file:
 ```sh
 cargo run myscript.js > myscript.json
 ```
-
-Author: Sanjeet N. Dasharath
