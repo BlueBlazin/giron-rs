@@ -1,8 +1,12 @@
 [package]
 name = "giron-wasm"
-version = "0.1.0"
+version = "0.2.3"
 authors = ["Sanjeet N. Dasharath <sanjeetdasharath@gmail.com>"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/BlueBlazin/giron"
+homepage = "https://github.com/BlueBlazin/giron"
+description = "ECMAScript parser which outputs ESTree JSON."
 
 [lib]
 crate-type = ["cdylib", "rlib"]
