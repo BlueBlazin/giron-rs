@@ -6,7 +6,7 @@ use std::fs;
 fn test_parser() {
     // let mut parser = Parser::new("[1, 2, 4]".chars());
     // parser.parse_script().unwrap();
-    parse_script(String::from("[1, 2, 4]")).unwrap();
+    parse_script(String::from("let x = 0;")).unwrap();
 }
 
 #[test]

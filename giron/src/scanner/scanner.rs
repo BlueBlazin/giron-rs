@@ -761,9 +761,9 @@ where
     // *******************************************************************
 
     pub fn scan_punctuator(&mut self) -> Result<Token> {
-        // Single: "{" "(" "[" ";" "," "]" ":" "?" "~"
+        // Single: "{" "(" "[" ";" "," "]" ":" "~"
         // Double: ("+", "+=", "++") ("-", "-=", "--") ("&", "&=", "&&") ("|", "|=", "||") ("%", "%=")
-        // Double: ("^", "^=")
+        // Double: ("^", "^=") ("?", "?.", "??")
         // Triple: ("<", "<<", "<<=", "<=") (".", "...") ("!", "!=", "!==") ("*", "**", "*=", "**=")
         // Triple: ("=", "==", "===", "=>")
         // Quadruple: (">", ">=", ">>", ">>>", ">>=", ">>>=")
@@ -777,6 +777,20 @@ where
                 self.punc1("}")
             }
             (Some(cp), _) if cp.is_single_char_punctuator() => self.punc1(&cp.to_string()[..]),
+            (Some('?'), _) => {
+                self.consume();
+                match self.peek2() {
+                    (Some('.'), Some(cp)) => {
+                        if cp.is_decimal_digit() {
+                            self.punc0("?")
+                        } else {
+                            self.punc1("?.")
+                        }
+                    }
+                    (Some('?'), _) => self.punc1("??"),
+                    (_, _) => self.punc0("?"),
+                }
+            }
             (Some('+'), Some(cp)) => match cp {
                 '=' => self.punc2("+="),
                 '+' => self.punc2("++"),

@@ -9,7 +9,7 @@ use crate::token::value::Value;
 use std::mem;
 
 // **************************************************************
-//   Dev stuff, Remove Me
+//   Dev stuff
 // **************************************************************
 
 const DEBUG: bool = false;
@@ -60,6 +60,12 @@ impl Params {
     }
 }
 
+enum SyntaxGoal {
+    Script,
+    Module,
+    Ambiguous,
+}
+
 pub struct Parser<I> {
     scanner: Scanner<I>,
     has_line_terminator: bool,
@@ -68,6 +74,7 @@ pub struct Parser<I> {
     params: Params,
     params_stack: Vec<Params>,
     marker_stack: Vec<Marker>,
+    goal: SyntaxGoal,
 }
 
 impl<I> Parser<I>
@@ -91,6 +98,7 @@ where
             current,
             params_stack: vec![],
             marker_stack: vec![],
+            goal: SyntaxGoal::Ambiguous,
         }
     }
 
@@ -101,6 +109,7 @@ where
     /// Parse source as an ECMAScript script.
     pub fn parse_script(&mut self) -> Result<Node> {
         log!("parse_script");
+        self.goal = SyntaxGoal::Script;
         self.start_span();
         let mut body = self.parse_directive_prologues()?;
         body.extend(self.parse_until_eof(&mut Self::parse_stmt_list_item)?);
@@ -111,9 +120,10 @@ where
         })
     }
 
-    /// /// Parse source as an ECMAScript module.
+    /// Parse source as an ECMAScript module.
     pub fn parse_module(&mut self) -> Result<Node> {
         log!("parse_module");
+        self.goal = SyntaxGoal::Module;
         self.start_span();
         self.ctx.strict = true;
         let mut body = self.with_params(
@@ -3792,6 +3802,11 @@ where
         //     [~Yield] yield
         //     [~Await] await
         self.start_span();
+
+        if self.ctx.strict && self.current.is_strict_reserved_kw() {
+            return self.error_current(ErrorType::UnexpectedStrictReserved);
+        }
+
         match self.current.tokentype {
             TokenType::Identifier => {
                 let name = self.advance(LexGoal::Div)?.to_string();
@@ -3834,6 +3849,11 @@ where
     fn parse_binding_id(&mut self) -> Result<Binding> {
         log!("parse_binding_id");
         self.start_span();
+
+        if self.ctx.strict && self.current.is_strict_reserved_kw() {
+            return self.error_current(ErrorType::UnexpectedStrictReserved);
+        }
+
         match self.current.tokentype {
             TokenType::Identifier => Ok(Binding::BindingIdentifier(BindingIdentifier {
                 name: self.advance(LexGoal::Div)?.to_string(),

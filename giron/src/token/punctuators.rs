@@ -56,6 +56,9 @@ pub enum Punctuator {
     SlashAssign,
     RBrace,
     Instanceof,
+    // ES2020
+    QMarkDot,
+    DoubleQMark,
 }
 
 impl Punctuator {
@@ -144,6 +147,9 @@ impl Punctuator {
             Punctuator::SlashAssign => "/=",
             Punctuator::RBrace => "}",
             Punctuator::Instanceof => "instanceof",
+            // ES2020
+            Punctuator::QMarkDot => "?.",
+            Punctuator::DoubleQMark => "??",
         }
     }
 
@@ -202,6 +208,9 @@ impl Punctuator {
             Punctuator::SlashAssign => String::from("/="),
             Punctuator::RBrace => String::from("}"),
             Punctuator::Instanceof => String::from("instanceof"),
+            // ES2020
+            Punctuator::QMarkDot => String::from("?."),
+            Punctuator::DoubleQMark => String::from("??"),
         }
     }
 }
@@ -262,6 +271,9 @@ impl From<&str> for Punctuator {
             "/=" => Punctuator::SlashAssign,
             "}" => Punctuator::RBrace,
             "instanceof" => Punctuator::Instanceof,
+            // ES2020
+            "?." => Punctuator::QMarkDot,
+            "??" => Punctuator::DoubleQMark,
             _ => panic!("Invalid punctuator."),
         }
     }

@@ -122,6 +122,7 @@ pub enum ErrorType {
     InvalidOrUnexpectedToken,
     InvalidUnicodeEscapeSequence,
     InvalidRestBindingPattern,
+    UnexpectedStrictReserved,
 }
 
 impl fmt::Display for Error {
@@ -160,6 +161,7 @@ impl fmt::Display for Error {
             ErrorType::InvalidOrUnexpectedToken => write!(f, "Invalid or unexpected token"),
             ErrorType::InvalidUnicodeEscapeSequence => write!(f, "Invalid Unicode escape sequence"),
             ErrorType::InvalidRestBindingPattern => write!(f, "`...` must be followed by an identifier in declaration contexts"),
+            ErrorType::UnexpectedStrictReserved => write!(f, "Unexpected strict mode reserved word"),
         }
     }
 }

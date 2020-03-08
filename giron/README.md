@@ -1,5 +1,5 @@
 [![LICENSE](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE)
-[![Build Status](https://travis-ci.com/BlueBlazin/giron.svg?branch=master)](https://travis-ci.com/BlueBlazin/giron)
+[![Build Status](https://travis-ci.com/BlueBlazin/giron-rs.svg?branch=master)](https://travis-ci.com/BlueBlazin/giron)
 [![Active Development](https://img.shields.io/badge/Maintenance%20Level-Actively%20Developed-brightgreen.svg)](https://gist.github.com/cheerfulstoic/d107229326a01ff0f333a1d3476e068d)
 
 # Giron
