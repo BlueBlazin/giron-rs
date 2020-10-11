@@ -37,4 +37,8 @@ wasm-bindgen-test = "0.2"
 
 [profile.release]
 # Tell `rustc` to optimize for small code size.
-opt-level = "s"
+# opt-level = "s"
+
+# Optimize for speed
+opt-level = 3
+lto = true

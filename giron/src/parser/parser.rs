@@ -4139,3 +4139,7 @@ where
         self.unexpected(token)
     }
 }
+
+#[cfg(test)]
+#[path = "./test_static_semantics.rs"]
+mod test_static_semantics;
